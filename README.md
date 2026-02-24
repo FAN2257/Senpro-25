@@ -2,7 +2,7 @@
 
 Snap. Track. Eat Well.
 
-Anggota 1:
+Anggota 1: Fadel Aulia Naldi - 23/519144/TK/57236
 
 Anggota 2:
 
