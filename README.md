@@ -1,6 +1,6 @@
 # SnapEats
 
-Detect your health by detect your food  
+Snap. Track. Eat Well.
 
 Anggota 1:
 
