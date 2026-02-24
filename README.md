@@ -1,10 +1,8 @@
-# KERENIFY  
+# SnapEats
 
-Kerenkan hidupmu  
-Kelompok Keren  
+Detect your health by detect your food  
 
-Ketua Kelompok:  
-Anggota 1:  Fadel Aulia Naldi
-Anggota 2:  Lalu Kevin Proudy Handal
-Anggota 3:  Mirsad Alganawi Azma
-Anggota 4:  Bintang Mahardika Shandy
+Anggota 1:
+Anggota 2:
+Anggota 3:
+Anggota 4:
