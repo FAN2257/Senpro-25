@@ -10,7 +10,7 @@ Departemen Teknologi Elektro dan Teknologi Informasi, Fakultas Teknik, Universit
 ### Anggota Kelompok
 | Nama | NIM | Peran |
 |------|-----|-------|
-| **Fadel Aulia Naldi** | 23/519144/TK/57236 | Project Manager & AI Engineer |
+| Fadel Aulia Naldi | 23/519144/TK/57236 | Project Manager & AI Engineer |
 | Lalu Kevin Proudy Handal | 23/515833/TK/56745 | UI/UX Designer |
 | Mirsad Alganawi Azma | 23/522716/TK/57737 | Software Engineer |
 | Bintang Mahardika Shandy | 23/517449/TK/56919 | Cloud Engineer |
