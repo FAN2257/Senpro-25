@@ -8,6 +8,7 @@
 Departemen Teknologi Elektro dan Teknologi Informasi, Fakultas Teknik, Universitas Gadjah Mada
 
 ### Anggota Kelompok
+
 | Nama | NIM | Peran |
 |------|-----|-------|
 | Fadel Aulia Naldi | 23/519144/TK/57236 | Project Manager & AI Engineer |
