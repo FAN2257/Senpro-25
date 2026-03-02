@@ -1,0 +1,39 @@
+name: SnapEats CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run linting
+        run: npm run lint
+      
+      - name: Test build
+        run: npm run build
+        
+  deploy:
+    needs: test-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Deploy to Azure App Service
+        # Akan diaktifkan saat siap deploy ke Azure
+        run: echo "Deploy step - configure Azure credentials saat ready"
