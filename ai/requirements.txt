@@ -1,0 +1,15 @@
+# AI/ML Dependencies
+ultralytics==8.2.0
+torch==2.4.0
+torchvision==0.19.0
+opencv-python==4.10.0.84
+
+# Data Processing
+numpy==1.26.4
+Pillow==10.3.0
+pyyaml==6.0.1
+
+# Web Framework
+fastapi==0.115.0
+uvicorn==0.30.0
+python-multipart==0.0.9
