@@ -10,6 +10,9 @@ import sys
 # Import configuration
 from backend.config import CORS_ORIGINS, DEBUG, API_HOST, API_PORT, LOG_LEVEL
 
+# Import routes
+from backend.routes import nutrition_router
+
 # Setup logging
 logging.basicConfig(
     level=LOG_LEVEL,
@@ -34,6 +37,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routers
+app.include_router(nutrition_router)
 
 # Health check endpoint
 @app.get("/health")
