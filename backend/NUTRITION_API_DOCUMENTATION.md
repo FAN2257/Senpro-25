@@ -21,24 +21,6 @@ API ini menyediakan endpoint untuk pencatatan gizi harian dengan fitur:
 
 **Base URL:** `http://localhost:8000/api/nutrition`
 
----
-
-## 📋 Endpoint List
-
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| POST | `/entries?user_id={id}` | Membuat entri gizi baru |
-| GET | `/entries/{user_id}` | Mendapatkan semua entri gizi |
-| GET | `/daily-summary/{user_id}` | Ringkasan gizi harian |
-| GET | `/weekly-summary/{user_id}` | Ringkasan gizi mingguan |
-| GET | `/entries/{user_id}/by-meal-type` | Entri berdasarkan jenis makanan |
-| PUT | `/entries/{entry_id}` | Memperbarui entri gizi |
-| DELETE | `/entries/{entry_id}` | Menghapus entri gizi |
-| POST | `/goals/{user_id}` | Menetapkan target nutrisi |
-| GET | `/goals/{user_id}` | Mendapatkan target nutrisi |
-
----
-
 ## 🔧 Detail Endpoint
 
 ### 1. ✅ Membuat Entri Gizi Baru
