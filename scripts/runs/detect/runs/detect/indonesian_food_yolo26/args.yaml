@@ -5,7 +5,7 @@ data: c:\Users\fadel\Fadel\Code\Senpro\Senpro-25\scripts\..\data\Food Recognatio
 epochs: 100
 time: null
 patience: 20
-batch: 8
+batch: 4
 imgsz: 640
 save: true
 save_period: 10
