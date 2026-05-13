@@ -50,10 +50,22 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 
 ### 4) Script Individual
 
-- `scripts\start-backend.ps1` untuk membuka backend saja.
-- `scripts\start-frontend.ps1` untuk membuka frontend saja.
+- `scripts\start-backend.cmd` untuk backend via Command Prompt.
+- `scripts\start-frontend.cmd` untuk frontend via Command Prompt.
 
-### 5) Cek Cepat
+### 5) Paling Praktis di Windows
+
+```powershell
+cd D:\Senpro25
+scripts\start-demo.cmd
+```
+
+Atau langsung klik dua file ini kalau Anda lebih suka buka manual:
+
+- `scripts\start-backend.cmd`
+- `scripts\start-frontend.cmd`
+
+### 6) Cek Cepat
 
 ```powershell
 curl http://localhost:8000/
