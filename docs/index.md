@@ -146,26 +146,6 @@ Berdasarkan rancangan *Use Case Diagram*, berikut adalah kebutuhan fungsional si
 
 ---
 
-## Low-Fidelity Wireframe
-
-1. Dashboard
-![Lo-Fi Dashboard](Dashboard.png)
-
-2. Login
-![Lo-Fi Login](Login.png)
-
-3. Register
-![Lo-Fi Register](Register.png)
-
-4. Log History
-![Lo-Fi Log History](Log%20History.png)
-
-5. Result Page
-![Lo-Fi Result Page](Result%20Page.png)
-
-6. Snap Page
-![Lo-Fi Snap Page](Snap%20Page.png)
-
 ---
 
 ## Gantt-Chart Pengerjaan Proyek
