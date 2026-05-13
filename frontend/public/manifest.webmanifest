@@ -1,0 +1,17 @@
+{
+  "name": "SnapEats",
+  "short_name": "SnapEats",
+  "description": "PWA untuk deteksi makanan Indonesia dan pemantauan nutrisi otomatis.",
+  "theme_color": "#0f172a",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
