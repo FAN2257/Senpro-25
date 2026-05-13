@@ -6,7 +6,9 @@ Stack yang dipakai di folder ini dipilih untuk paling kompatibel dengan backend 
 - Vite sebagai build tool
 - React Router untuk navigasi halaman
 - TanStack Query untuk data fetching dan caching
-- vite-plugin-pwa untuk progressive web app support
+- Service worker native (`public/sw.js`) untuk offline caching (app shell + endpoint `GET /foods`)
+- Zustand untuk scan state management
+- react-hot-toast untuk user feedback yang lebih polished
 - CSS variables + custom layout system untuk styling modern, ringan, dan mudah dijaga
 
 ## Kenapa stack ini
@@ -70,3 +72,9 @@ Desain dibuat dengan prinsip:
 - Responsif untuk desktop dan mobile
 - Kontras warna aman dan mudah dibaca
 - Fokus pada alur utama: scan, lihat nutrisi, simpan riwayat
+
+## Peningkatan yang sudah diterapkan
+
+- PWA offline-ready: app shell dicache melalui service worker, termasuk fallback cache untuk endpoint `GET /foods`.
+- UI presentation mode: animasi reveal berbasis `framer-motion` di landing dashboard dan interaksi card yang lebih hidup.
+- Scan flow lebih matang: state tersentralisasi via Zustand, toast feedback untuk setiap aksi utama, dan ringkasan recent scans.

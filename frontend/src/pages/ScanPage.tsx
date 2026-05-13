@@ -1,37 +1,43 @@
-import { ChangeEvent, useMemo, useState } from 'react';
-import { CameraOff, ImagePlus, ScanSearch, Sparkles } from 'lucide-react';
+import { ChangeEvent, useMemo } from 'react';
+import { CameraOff, Clock3, ImagePlus, ScanSearch, Sparkles } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { predictFood } from '../lib/api';
-import type { DetectionItem, NutritionPredictionResponse } from '../types/api';
+import type { DetectionItem } from '../types/api';
+import { useScanStore } from '../store/scanStore';
+import { MotionSection } from '../components/MotionSection';
 
 export function ScanPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [result, setResult] = useState<NutritionPredictionResponse | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const {
+    file,
+    previewUrl,
+    result,
+    loading,
+    error,
+    history,
+    setFile,
+    setResult,
+    setError,
+    setLoading,
+    pushHistory,
+    reset
+  } = useScanStore();
 
   const totalDetections = useMemo(() => result?.detections.length ?? 0, [result]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
     setFile(selectedFile);
-    setError('');
-    setResult(null);
-
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
 
     if (selectedFile) {
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-    } else {
-      setPreviewUrl('');
+      toast.success('Foto siap dianalisis.');
     }
   };
 
   const handleSubmit = async () => {
     if (!file) {
-      setError('Pilih gambar makanan terlebih dahulu.');
+      const message = 'Pilih gambar makanan terlebih dahulu.';
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -41,8 +47,16 @@ export function ScanPage() {
     try {
       const response = await predictFood(file);
       setResult(response);
+      pushHistory(file.name, response);
+      if (response.detections.length > 0) {
+        toast.success(`${response.detections.length} item terdeteksi.`);
+      } else {
+        toast('Tidak ada item yang terdeteksi, coba foto yang lebih jelas.', { icon: 'i' });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal memproses gambar.');
+      const message = err instanceof Error ? err.message : 'Gagal memproses gambar.';
+      setError(message);
+      toast.error('Analisis gagal. Periksa koneksi atau format gambar.');
     } finally {
       setLoading(false);
     }
@@ -95,7 +109,7 @@ export function ScanPage() {
   };
 
   return (
-    <section className="section">
+    <MotionSection className="section">
       <div className="section-header">
         <div>
           <h3 className="section-title">Scan makanan</h3>
@@ -118,12 +132,7 @@ export function ScanPage() {
             <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={loading}>
               <ScanSearch size={16} /> {loading ? 'Memproses...' : 'Analisis Gambar'}
             </button>
-            <button className="btn btn-secondary" type="button" onClick={() => {
-              setFile(null);
-              setPreviewUrl('');
-              setResult(null);
-              setError('');
-            }}>
+            <button className="btn btn-secondary" type="button" onClick={reset}>
               <CameraOff size={16} /> Reset
             </button>
           </div>
@@ -151,6 +160,25 @@ export function ScanPage() {
             <p className="metric-note">Hasil ini datang langsung dari response backend FastAPI.</p>
           </div>
 
+          <div className="card">
+            <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+              <h4 className="card-title">Recent scans</h4>
+              <span className="chip"><Clock3 size={14} /> {history.length} tersimpan</span>
+            </div>
+            {history.length > 0 ? (
+              <div className="list" style={{ marginTop: 12 }}>
+                {history.slice(0, 3).map((item) => (
+                  <div className="list-item" key={item.id}>
+                    <strong>{item.filename}</strong>
+                    <span>{item.detectionCount} deteksi</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state" style={{ marginTop: 12 }}>Belum ada riwayat scan.</div>
+            )}
+          </div>
+
           {result?.detections?.length ? result.detections.map(renderDetection) : (
             <div className="empty-state">
               Hasil scan akan tampil di sini setelah gambar diproses.
@@ -158,6 +186,6 @@ export function ScanPage() {
           )}
         </div>
       </div>
-    </section>
+    </MotionSection>
   );
 }

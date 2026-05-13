@@ -1,5 +1,6 @@
 import { ArrowRight, Camera, ChartNoAxesColumnIncreasing, ShieldCheck, Sparkles, UtensilsCrossed } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { MotionSection } from '../components/MotionSection';
 
 const highlights = [
   {
@@ -21,15 +22,15 @@ const highlights = [
 
 const stats = [
   { label: 'Backend API', value: 'FastAPI', note: 'Compatible dengan endpoint repo ini' },
-  { label: 'PWA Stack', value: 'Vite + React', note: 'Ringan, cepat, dan mudah di-maintain' },
+  { label: 'PWA Stack', value: 'Offline-ready', note: 'App shell + cache foods endpoint via service worker' },
   { label: 'UI System', value: 'Accessible', note: 'Responsive, jelas, dan user-friendly' },
-  { label: 'Data Flow', value: 'Predict → Log', note: 'Alur demo yang mudah dipresentasikan' }
+  { label: 'Data Flow', value: 'Predict → Toast → History', note: 'State scan tersimpan dan mudah dipresentasikan' }
 ];
 
 export function DashboardPage() {
   return (
     <>
-      <section className="hero">
+      <MotionSection className="hero">
         <div className="hero-panel hero-copy">
           <span className="eyebrow">
             <Sparkles size={14} /> Product pitch ready
@@ -77,9 +78,9 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
-      </section>
+      </MotionSection>
 
-      <section className="section">
+      <MotionSection className="section" delay={0.08}>
         <div className="section-header">
           <div>
             <h3 className="section-title">Kenapa frontend ini efektif</h3>
@@ -98,9 +99,9 @@ export function DashboardPage() {
             </article>
           ))}
         </div>
-      </section>
+      </MotionSection>
 
-      <section className="section">
+      <MotionSection className="section" delay={0.16}>
         <div className="section-header">
           <div>
             <h3 className="section-title">Stack yang dipilih</h3>
@@ -117,7 +118,7 @@ export function DashboardPage() {
             </article>
           ))}
         </div>
-      </section>
+      </MotionSection>
     </>
   );
 }
