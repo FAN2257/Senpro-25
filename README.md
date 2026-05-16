@@ -10,68 +10,34 @@ Anggota 3: Mirsad Alganawi Azma - 23/522716/TK/57737
 
 Anggota 4: Bintang Mahardika Shandy - 23/517449/TK/56919
 
-## Quick Start Demo
+## Development Setup
 
-Pakai alur ini supaya backend dan frontend bisa dijalankan ulang dengan cepat dari root repo.
+Workspace ini dikonfigurasi agar backend dan frontend otomatis berjalan ketika folder ini dibuka di VS Code.
 
-### 1) Backend
+### Otomatis saat buka VS Code
 
-```powershell
-cd D:\Senpro25\backend
-if (-not (Test-Path .venv)) { python -m venv .venv }
-. .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m uvicorn api:app --host 0.0.0.0 --port 8000 --reload
-```
+- Task auto-start ada di [.vscode/tasks.json](.vscode/tasks.json).
+- Backend dijalankan dari `backend/.venv` dengan `uvicorn api:app --host 0.0.0.0 --port 8000 --reload`.
+- Frontend dijalankan dari `frontend` dengan `npm run dev`.
 
-### 2) Frontend
+### Manual fallback
 
-Pastikan file `frontend\.env` berisi:
+Kalau perlu menjalankan manual, pakai dua script ini:
+
+- `scripts/start-backend.cmd`
+- `scripts/start-frontend.cmd`
+
+### Environment frontend
+
+Pastikan `frontend/.env` berisi:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-Lalu jalankan:
-
-```powershell
-cd D:\Senpro25\frontend
-npm install
-npm run dev
-```
-
-### 3) Jalankan Keduanya Sekaligus
-
-```powershell
-cd D:\Senpro25
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.\scripts\start-demo.ps1
-```
-
-### 4) Script Individual
-
-- `scripts\start-backend.cmd` untuk backend via Command Prompt.
-- `scripts\start-frontend.cmd` untuk frontend via Command Prompt.
-
-### 5) Paling Praktis di Windows
-
-```powershell
-cd D:\Senpro25
-scripts\start-demo.cmd
-```
-
-Atau langsung klik dua file ini kalau Anda lebih suka buka manual:
-
-- `scripts\start-backend.cmd`
-- `scripts\start-frontend.cmd`
-
-### 6) Cek Cepat
+### Cek cepat
 
 ```powershell
 curl http://localhost:8000/
 curl http://localhost:8000/foods
 ```
-
-Catatan:
-- Untuk demo PWA offline, gunakan frontend build/preview jika ingin service worker aktif.
-- Jika Anda menjalankan demo berulang kali, gunakan `scripts\start-demo.ps1` agar tidak perlu mengingat urutan command.

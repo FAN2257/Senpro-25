@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "snapeats: backend",
+      "type": "shell",
+      "command": "${workspaceFolder}\\scripts\\start-backend.cmd",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "group": "watch"
+      },
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": ".*"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Waiting for application startup|Uvicorn running on",
+          "endsPattern": "Application startup complete"
+        }
+      }
+    },
+    {
+      "label": "snapeats: frontend",
+      "type": "shell",
+      "command": "${workspaceFolder}\\scripts\\start-frontend.cmd",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "group": "watch"
+      },
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": ".*"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "Local:"
+        }
+      }
+    },
+    {
+      "label": "snapeats: start on folder open",
+      "dependsOn": [
+        "snapeats: backend",
+        "snapeats: frontend"
+      ],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "never"
+      }
+    }
+  ]
+}
