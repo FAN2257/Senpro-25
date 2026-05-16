@@ -37,14 +37,14 @@ export function HistoryPage() {
     <section className="section">
       <div className="section-header">
         <div>
-          <h3 className="section-title">Riwayat & kalkulasi meal</h3>
-          <p className="section-description">Halaman ini memperlihatkan alur akumulasi nutrisi, sangat cocok untuk demo fitur yang paling bernilai.</p>
+          <h3 className="section-title">Riwayat makan</h3>
+          <p className="section-description">Simpan kombinasi makanan yang sering Anda pilih dan lihat perkiraan gizinya.</p>
         </div>
       </div>
 
       <div className="grid-2">
         <div className="form-card">
-          <h4 className="form-title">Meal builder</h4>
+          <h4 className="form-title">Susun menu</h4>
           <div className="grid-2" style={{ marginTop: 16 }}>
             <div className="field">
               <label className="field-label" htmlFor="history-food">Nama makanan</label>
@@ -69,7 +69,7 @@ export function HistoryPage() {
             </button>
           </div>
 
-          <div className="footer-note">Total item dalam meal: {totalItems}</div>
+          <div className="footer-note">Total item yang Anda simpan: {totalItems}</div>
           <div className="list" style={{ marginTop: 12 }}>
             {items.map((item, index) => (
               <div className="list-item" key={`${item.food_name}-${index}`}>
@@ -81,7 +81,7 @@ export function HistoryPage() {
         </div>
 
         <div className="result-card">
-          <h4 className="form-title">Ringkasan kalkulasi</h4>
+          <h4 className="form-title">Perkiraan total gizi</h4>
           {result?.total_nutrition ? (
             <div className="list" style={{ marginTop: 16 }}>
               {Object.entries(result.total_nutrition).map(([key, value]) => (
@@ -93,17 +93,16 @@ export function HistoryPage() {
             </div>
           ) : (
             <div className="empty-state" style={{ marginTop: 16 }}>
-              Jalankan kalkulasi untuk menampilkan total nutrisi.
+              Jalankan perhitungan untuk melihat total gizinya.
             </div>
           )}
         </div>
       </div>
 
       <div className="card">
-        <h4 className="card-title">Value angle untuk presentasi</h4>
+        <h4 className="card-title">Kenapa fitur ini berguna</h4>
         <p className="muted" style={{ lineHeight: 1.7 }}>
-          Riwayat makan yang terstruktur membuat produk terasa lebih bernilai daripada sekadar demo AI image recognition.
-          Ini membuka narasi product-market fit untuk diet tracking, clinical tracking, dan healthy habit monitoring.
+          Riwayat yang tersusun membantu Anda melihat kebiasaan makan dengan lebih jelas dan membuat keputusan berikutnya lebih mudah.
         </p>
       </div>
     </section>

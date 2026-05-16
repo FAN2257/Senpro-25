@@ -18,8 +18,8 @@ export function FoodDetailPage() {
     <section className="section">
       <div className="section-header">
         <div>
-          <h3 className="section-title">Detail makanan</h3>
-          <p className="section-description">Halaman ini cocok untuk menjelaskan bagaimana database nutrisi lokal dihubungkan ke hasil AI.</p>
+          <h3 className="section-title">Ringkasan makanan</h3>
+          <p className="section-description">Lihat informasi utama dari makanan yang Anda pilih dalam satu tampilan.</p>
         </div>
         <button className="btn btn-ghost" onClick={() => navigate(-1)}>
           <ArrowLeft size={16} /> Kembali
@@ -29,30 +29,30 @@ export function FoodDetailPage() {
       <div className="grid-2">
         <div className="form-card">
           <div className="field">
-            <span className="field-label">Food name</span>
+            <span className="field-label">Nama makanan</span>
             <h4 className="card-title" style={{ fontSize: '2rem' }}>{decodedFoodName}</h4>
             <p className="field-help">
-              Endpoint detail memungkinkan presentasi yang lebih meyakinkan karena menunjukkan struktur data yang rapi per item.
+              Informasi ini membantu Anda melihat isi makanan dengan lebih jelas.
             </p>
           </div>
 
           <div className="toolbar" style={{ marginTop: 18 }}>
             <span className="status status-success">
-              <Flame size={14} /> Nutrition-ready
+              <Flame size={14} /> Ringkasan tersedia
             </span>
             <span className="status status-warning">
-              <Filter size={14} /> 100 g reference
+              <Filter size={14} /> Referensi 100 g
             </span>
           </div>
 
           <div className="footer-note">
-            Gunakan halaman ini sebagai jembatan antara hasil deteksi dan insight nutrisi per makanan.
+            Gunakan halaman ini untuk membandingkan makanan satu dengan yang lain.
           </div>
         </div>
 
         <div className="result-card">
-          {isLoading ? <div className="empty-state">Memuat detail makanan...</div> : null}
-          {error ? <div className="empty-state">Gagal mengambil detail dari backend.</div> : null}
+          {isLoading ? <div className="empty-state">Memuat ringkasan makanan...</div> : null}
+          {error ? <div className="empty-state">Ringkasan makanan belum bisa dimuat.</div> : null}
           {data?.nutrition_info ? (
             <div className="list">
               {Object.entries(data.nutrition_info)
@@ -66,14 +66,14 @@ export function FoodDetailPage() {
             </div>
           ) : null}
           {data?.nutrition_info ? (
-            <p className="footer-note">Data berasal dari endpoint /foods/{decodedFoodName} dan dapat digunakan untuk kalkulasi porsi.</p>
+            <p className="footer-note">Data ini ditampilkan per 100 gram dan bisa dipakai untuk memperkirakan porsi.</p>
           ) : null}
         </div>
       </div>
 
       <div style={{ marginTop: 18 }}>
         <Link className="btn btn-secondary" to="/scan">
-          Gunakan hasil ini di scan flow
+          Pakai hasil ini saat scan
         </Link>
       </div>
     </section>

@@ -29,7 +29,7 @@ export function ScanPage() {
     setFile(selectedFile);
 
     if (selectedFile) {
-      toast.success('Foto siap dianalisis.');
+      toast.success('Foto siap diproses.');
     }
   };
 
@@ -49,14 +49,14 @@ export function ScanPage() {
       setResult(response);
       pushHistory(file.name, response);
       if (response.detections.length > 0) {
-        toast.success(`${response.detections.length} item terdeteksi.`);
+        toast.success(`${response.detections.length} makanan ditemukan.`);
       } else {
-        toast('Tidak ada item yang terdeteksi, coba foto yang lebih jelas.', { icon: 'i' });
+        toast('Belum ada makanan yang terlihat jelas, coba foto yang lebih terang.', { icon: 'i' });
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Gagal memproses gambar.';
       setError(message);
-      toast.error('Analisis gagal. Periksa koneksi atau format gambar.');
+      toast.error('Gambar belum bisa diproses. Coba lagi dengan foto yang lebih jelas.');
     } finally {
       setLoading(false);
     }
@@ -69,22 +69,22 @@ export function ScanPage() {
       <article className="result-card" key={`${item.food_name}-${item.confidence}`}>
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
           <span className="chip">{item.food_name}</span>
-          <span className="status status-success">{Math.round(item.confidence * 100)}% confidence</span>
+          <span className="status status-success">Tingkat cocok {Math.round(item.confidence * 100)}%</span>
         </div>
 
         <div className="grid-2" style={{ marginTop: 16 }}>
           <div className="stack">
             <div className="field">
-              <span className="field-label">Bounding box</span>
+              <span className="field-label">Posisi deteksi</span>
               <p className="field-help">
                 x: {item.bounding_box.x_min} to {item.bounding_box.x_max} | y: {item.bounding_box.y_min} to{' '}
                 {item.bounding_box.y_max}
               </p>
             </div>
             <div className="field">
-              <span className="field-label">Nutrition status</span>
+              <span className="field-label">Status gizi</span>
               <p className="field-help">
-                {nutrition ? 'Data gizi ditemukan dan siap ditampilkan.' : 'Data gizi belum tersedia untuk kelas ini.'}
+                {nutrition ? 'Ringkasan gizi tersedia.' : 'Ringkasan gizi belum tersedia untuk item ini.'}
               </p>
             </div>
           </div>
@@ -113,10 +113,10 @@ export function ScanPage() {
       <div className="section-header">
         <div>
           <h3 className="section-title">Scan makanan</h3>
-          <p className="section-description">Upload foto makanan, panggil endpoint /predict, lalu tampilkan hasilnya dengan struktur yang mudah dibaca.</p>
+          <p className="section-description">Unggah foto makanan, lalu lihat ringkasan hasilnya dengan cepat dan jelas.</p>
         </div>
         <span className="chip">
-          <Sparkles size={14} /> API-compatible
+          <Sparkles size={14} /> Siap dipakai
         </span>
       </div>
 
@@ -157,12 +157,12 @@ export function ScanPage() {
           <div className="metric">
             <p className="metric-label">Detections</p>
             <h4 className="metric-value">{totalDetections}</h4>
-            <p className="metric-note">Hasil ini datang langsung dari response backend FastAPI.</p>
+            <p className="metric-note">Jumlah makanan yang berhasil dikenali dari foto Anda.</p>
           </div>
 
           <div className="card">
             <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-              <h4 className="card-title">Recent scans</h4>
+              <h4 className="card-title">Riwayat terakhir</h4>
               <span className="chip"><Clock3 size={14} /> {history.length} tersimpan</span>
             </div>
             {history.length > 0 ? (
@@ -170,12 +170,12 @@ export function ScanPage() {
                 {history.slice(0, 3).map((item) => (
                   <div className="list-item" key={item.id}>
                     <strong>{item.filename}</strong>
-                    <span>{item.detectionCount} deteksi</span>
+                    <span>{item.detectionCount} hasil</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="empty-state" style={{ marginTop: 12 }}>Belum ada riwayat scan.</div>
+              <div className="empty-state" style={{ marginTop: 12 }}>Belum ada riwayat scan yang tersimpan.</div>
             )}
           </div>
 

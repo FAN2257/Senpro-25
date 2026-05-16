@@ -18,10 +18,10 @@ export function FoodsPage() {
     <section className="section">
       <div className="section-header">
         <div>
-          <h3 className="section-title">Database makanan</h3>
-          <p className="section-description">Endpoint /foods menampilkan daftar kelas yang didukung model dan siap dipakai untuk navigasi detail.</p>
+          <h3 className="section-title">Daftar makanan</h3>
+          <p className="section-description">Cari makanan yang Anda makan untuk melihat ringkasan gizinya dengan cepat.</p>
         </div>
-        <span className="chip"><BookOpen size={14} /> {data?.total_items ?? 0} classes</span>
+        <span className="chip"><BookOpen size={14} /> {data?.total_items ?? 0} tersedia</span>
       </div>
 
       <div className="form-card">
@@ -42,15 +42,15 @@ export function FoodsPage() {
       </div>
 
       {isLoading ? <div className="empty-state">Memuat daftar makanan...</div> : null}
-      {error ? <div className="empty-state">Gagal memuat data makanan dari backend.</div> : null}
+      {error ? <div className="empty-state">Daftar makanan belum bisa dimuat.</div> : null}
 
       <div className="grid-3">
         {foods.map((food) => (
           <article className="card" key={food}>
-            <span className="chip">Supported</span>
+            <span className="chip">Tersedia</span>
             <h4 className="card-title" style={{ marginTop: 12 }}>{food}</h4>
             <p className="muted" style={{ lineHeight: 1.7 }}>
-              Buka detail nutrisi untuk menampilkan data yang langsung berasal dari backend FastAPI.
+              Buka detail untuk melihat ringkasan gizi makanan ini.
             </p>
             <Link className="btn btn-secondary" to={`/foods/${encodeURIComponent(food)}`}>
               Lihat detail
