@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { LayoutDashboard, ScanSearch, BookOpenText, ListChecks, Shield } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Shield } from 'lucide-react';
 import { AppShell } from './components/AppShell';
 import { DashboardPage } from './pages/DashboardPage';
 import { ScanPage } from './pages/ScanPage';
@@ -10,9 +10,7 @@ import { AuthPage } from './pages/AuthPage';
 
 const navItems = [
   { to: '/', label: 'Beranda', icon: LayoutDashboard },
-  { to: '/scan', label: 'Scan', icon: ScanSearch },
-  { to: '/foods', label: 'Foods', icon: BookOpenText },
-  { to: '/history', label: 'History', icon: ListChecks },
+  { to: '/history', label: 'Riwayat', icon: ListChecks },
   { to: '/auth', label: 'Masuk / Daftar', icon: Shield }
 ];
 

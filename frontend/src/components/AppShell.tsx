@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { ArrowUpRight, ChefHat } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface NavItem {
@@ -19,12 +19,12 @@ export function AppShell({ navItems, children }: AppShellProps) {
     <div className="app-frame">
       <header className="topbar">
         <Link to="/" className="brand" aria-label="SnapEats home">
-          <div className="brand-mark">
-            <ChefHat size={22} />
+          <div className="brand-mark brand-mark-logo">
+            <img src="/LogoSnapEats.png" alt="" aria-hidden="true" />
           </div>
           <div>
             <p className="brand-title">SnapEats</p>
-            <p className="brand-subtitle">Scan makanan, simpan pilihan, atur makan dengan mudah</p>
+            <p className="brand-subtitle">Bantu pilih makanan dengan lebih cepat dan jelas</p>
           </div>
         </Link>
         <nav className="topnav" aria-label="Primary navigation">

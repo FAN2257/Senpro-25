@@ -24,6 +24,8 @@ export function ScanPage() {
 
   const totalDetections = useMemo(() => result?.detections.length ?? 0, [result]);
 
+  const captureMode = 'environment';
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
     setFile(selectedFile);
@@ -124,8 +126,8 @@ export function ScanPage() {
         <div className="form-card">
           <div className="field">
             <label className="field-label" htmlFor="food-image">Pilih gambar</label>
-            <input id="food-image" className="input" type="file" accept="image/*" onChange={handleFileChange} />
-            <p className="field-help">Gunakan foto yang cukup terang agar deteksi lebih stabil.</p>
+            <input id="food-image" className="input" type="file" accept="image/*" capture={captureMode} onChange={handleFileChange} />
+            <p className="field-help">Di ponsel, kamera akan terbuka otomatis. Di desktop, Anda bisa pilih file foto.</p>
           </div>
 
           <div className="form-actions" style={{ marginTop: 18 }}>

@@ -18,10 +18,10 @@ export function FoodsPage() {
     <section className="section">
       <div className="section-header">
         <div>
-          <h3 className="section-title">Daftar makanan</h3>
-          <p className="section-description">Cari makanan yang Anda makan untuk melihat ringkasan gizinya dengan cepat.</p>
+          <h3 className="section-title">Referensi makanan</h3>
+          <p className="section-description">Halaman ini opsional jika Anda ingin menelusuri makanan yang sering muncul di hasil scan.</p>
         </div>
-        <span className="chip"><BookOpen size={14} /> {data?.total_items ?? 0} tersedia</span>
+        <span className="chip"><BookOpen size={14} /> {data?.total_items ?? 0} item</span>
       </div>
 
       <div className="form-card">
@@ -42,7 +42,7 @@ export function FoodsPage() {
       </div>
 
       {isLoading ? <div className="empty-state">Memuat daftar makanan...</div> : null}
-      {error ? <div className="empty-state">Daftar makanan belum bisa dimuat.</div> : null}
+      {error ? <div className="empty-state">Referensi makanan belum bisa dimuat.</div> : null}
 
       <div className="grid-3">
         {foods.map((food) => (
