@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { LayoutDashboard, ListChecks, Shield } from 'lucide-react';
 import { AppShell } from './components/AppShell';
 import { DashboardPage } from './pages/DashboardPage';
+import { FeaturesPage } from './pages/FeaturesPage';
 import { ScanPage } from './pages/ScanPage';
 import { FoodsPage } from './pages/FoodsPage';
 import { FoodDetailPage } from './pages/FoodDetailPage';
@@ -19,6 +20,7 @@ export function App() {
     <AppShell navItems={navItems}>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
         <Route path="/scan" element={<ScanPage />} />
         <Route path="/foods" element={<FoodsPage />} />
         <Route path="/foods/:foodName" element={<FoodDetailPage />} />

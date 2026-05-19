@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { App } from './App';
 import { registerServiceWorker } from './lib/registerServiceWorker';
 import './styles/globals.css';
+import './styles/landing.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
