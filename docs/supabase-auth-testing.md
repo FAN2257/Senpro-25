@@ -1,76 +1,79 @@
 # Supabase Auth Testing
 
-Use this guide to verify SnapEats login and registration with Supabase.
+Panduan singkat untuk memverifikasi proses pendaftaran dan masuk menggunakan Supabase pada proyek SnapEats.
 
-## 1. Local environment
+**1. Variabel lingkungan (frontend)**
 
-Make sure `frontend/.env.local` contains:
+Buat file `.env.local` di folder `frontend/` (atau tambahkan variabel ke environment Anda) dengan isi minimal berikut:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
-VITE_SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+VITE_SUPABASE_URL=https://<YOUR-PROJECT>.supabase.co
+VITE_SUPABASE_ANON_KEY=<YOUR_SUPABASE_ANON_KEY>
 ```
 
-Do not put the service role secret in the frontend. Keep it only on the server side if you ever need admin access.
+- Ambil `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` dari halaman Project > Settings > API di dashboard Supabase.
+- Jangan pernah menaruh `service_role` (secret) pada frontend; simpan hanya pada server jika diperlukan.
 
-## 2. Start the app
+**2. Menjalankan aplikasi (lokal)**
 
-Open two terminals from the repository root:
+Dari root repository Anda ada skrip helper untuk memulai backend dan frontend. Contoh menjalankan dari PowerShell (jalankan dua terminal terpisah):
 
 ```powershell
-cd "C:\Users\Kevin TIF 23\Downloads\Senpro25\Senpro-25\backend"
+.\scripts\start-backend.cmd
+.\scripts\start-frontend.cmd
+```
+
+Atau jalankan manual jika perlu:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+
+cd ..\backend
 python -m uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-```powershell
-cd "C:\Users\Kevin TIF 23\Downloads\Senpro25\Senpro-25\frontend"
-npm run dev
-```
+Jika Anda menggunakan VS Code, task `snapeats: start on folder open` tersedia untuk menjalankan keduanya.
 
-## 3. Test registration
+**3. Test pendaftaran (Registration)**
 
-1. Open the frontend in the browser.
-2. Go to the `Masuk / Daftar` page.
-3. Switch to `Daftar`.
-4. Fill in:
+1. Buka aplikasi frontend di browser (biasanya `http://localhost:5173` atau alamat yang ditampilkan oleh Vite).
+2. Buka halaman `Masuk / Daftar`.
+3. Pilih tab `Daftar`.
+4. Isi formulir dengan:
    - Nama lengkap
-   - Email baru yang belum pernah dipakai di Supabase
-   - Password minimal 6 karakter
-5. Click `Daftar`.
+   - Email baru (belum terdaftar di proyek Supabase Anda)
+   - Password (minimal 6 karakter)
+5. Klik `Daftar`.
 
-Expected result:
-- If email confirmation is enabled in Supabase, the app shows a success message asking you to verify the email.
-- If email confirmation is disabled, the app signs in immediately and redirects to the home page.
+Hasil yang diharapkan:
+- Jika verifikasi email diaktifkan di Supabase, aplikasi menampilkan pesan sukses meminta verifikasi email.
+- Jika verifikasi email dimatikan, akun akan langsung masuk dan diarahkan ke halaman utama.
 
-## 4. Test login
+**4. Test masuk (Login)**
 
-1. After the account is created, switch to `Masuk`.
-2. Enter the same email and password.
-3. Click `Masuk`.
+1. Setelah akun dibuat (dan/atau terkonfirmasi), buka tab `Masuk`.
+2. Masukkan email dan password yang sama.
+3. Klik `Masuk`.
 
-Expected result:
-- The app shows a success toast.
-- You return to the home page.
-- The auth card shows your signed-in email.
+Hasil yang diharapkan:
+- Muncul toast/indikator sukses.
+- Anda diarahkan kembali ke halaman utama.
+- Komponen auth menampilkan email pengguna yang sedang masuk.
 
-## 5. Check the new user in Supabase
+**5. Verifikasi pengguna di dashboard Supabase**
 
-Use the Supabase dashboard for the project `SnapEats`.
+1. Buka dashboard Supabase project Anda.
+2. Masuk ke `Authentication` → `Users`.
+3. Cari email yang baru saja didaftarkan.
 
-1. Open the project.
-2. Go to `Authentication`.
-3. Open `Users`.
-4. Find the new email address.
+Periksa kolom `email`, `created_at`, dan `confirmed_at` (jika verifikasi email diaktifkan).
 
-What to check:
-- `email` matches the account you just created.
-- `created_at` is recent.
-- `confirmed_at` exists if email confirmation is turned on or if the account has been verified.
+**6. Verifikasi langsung dengan SQL (opsional)**
 
-## 6. Optional direct verification
-
-If you need to inspect the auth table via SQL in Supabase, use the dashboard SQL editor and run a query like:
+Gunakan SQL editor di dashboard Supabase dan jalankan:
 
 ```sql
 select id, email, created_at, confirmed_at
@@ -79,8 +82,10 @@ order by created_at desc
 limit 10;
 ```
 
-## 7. Common issues
+**7. Masalah umum**
 
-- Wrong or missing env vars: the auth page will show a warning that Supabase is not configured.
-- Invalid email or password: the app shows the Supabase error toast.
-- No new user in the dashboard: the account may have failed to create, or email confirmation is waiting.
+- Variabel environment salah atau tidak ada: frontend menampilkan peringatan bahwa Supabase belum dikonfigurasi.
+- Email atau password tidak valid: akan tampil error dari Supabase.
+- Tidak ada user baru di dashboard: pendaftaran mungkin gagal atau menunggu verifikasi email.
+
+Jika Anda ingin, saya dapat menambahkan instruksi langkah-demi-langkah untuk mengambil `ANON KEY` dari panel Supabase.
