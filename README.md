@@ -29,11 +29,15 @@ Kalau perlu menjalankan manual, pakai dua script ini:
 
 ### Environment frontend
 
-Pastikan `frontend/.env` berisi:
+Pastikan `frontend/.env.local` berisi:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
+VITE_SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
+
+Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-auth-testing.md).
 
 ### Cek cepat
 
