@@ -1,4 +1,4 @@
-import { ChangeEvent, useMemo } from 'react';
+﻿import { ChangeEvent, useMemo, useState } from 'react';
 import { CameraOff, Clock3, ImagePlus, ScanSearch, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { predictFood } from '../lib/api';
@@ -6,7 +6,10 @@ import type { DetectionItem } from '../types/api';
 import { useScanStore } from '../store/scanStore';
 import { MotionSection } from '../components/MotionSection';
 
+const isMobileDevice = () => { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); };
+
 export function ScanPage() {
+  const [isMobile] = useState(isMobileDevice());
   const {
     file,
     previewUrl,
@@ -24,7 +27,7 @@ export function ScanPage() {
 
   const totalDetections = useMemo(() => result?.detections.length ?? 0, [result]);
 
-  const captureMode = 'environment';
+  const captureMode = (isMobile ? 'environment' : undefined) as React.InputHTMLAttributes<HTMLInputElement>['capture'];
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
@@ -66,14 +69,12 @@ export function ScanPage() {
 
   const renderDetection = (item: DetectionItem) => {
     const nutrition = typeof item.nutrition_info === 'string' ? null : item.nutrition_info;
-
     return (
       <article className="result-card" key={`${item.food_name}-${item.confidence}`}>
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
           <span className="chip">{item.food_name}</span>
           <span className="status status-success">Tingkat cocok {Math.round(item.confidence * 100)}%</span>
         </div>
-
         <div className="grid-2" style={{ marginTop: 16 }}>
           <div className="stack">
             <div className="field">
@@ -90,13 +91,12 @@ export function ScanPage() {
               </p>
             </div>
           </div>
-
           {nutrition ? (
             <div className="list">
               {['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'Fe'].map((key) => (
                 <div className="list-item" key={key}>
                   <strong>{key}</strong>
-                  <span>{nutrition[key] ?? 0}</span>
+                  <span>{(nutrition as any)[key] ?? 0}</span>
                 </div>
               ))}
             </div>
@@ -121,7 +121,6 @@ export function ScanPage() {
           <Sparkles size={14} /> Siap dipakai
         </span>
       </div>
-
       <div className="grid-2">
         <div className="form-card">
           <div className="field">
@@ -129,7 +128,6 @@ export function ScanPage() {
             <input id="food-image" className="input" type="file" accept="image/*" capture={captureMode} onChange={handleFileChange} />
             <p className="field-help">Di ponsel, kamera akan terbuka otomatis. Di desktop, Anda bisa pilih file foto.</p>
           </div>
-
           <div className="form-actions" style={{ marginTop: 18 }}>
             <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={loading}>
               <ScanSearch size={16} /> {loading ? 'Memproses...' : 'Analisis Gambar'}
@@ -138,9 +136,7 @@ export function ScanPage() {
               <CameraOff size={16} /> Reset
             </button>
           </div>
-
           {error ? <p className="status status-danger" style={{ marginTop: 18 }}>{error}</p> : null}
-
           <div className="preview-card" style={{ marginTop: 20 }}>
             {previewUrl ? (
               <img src={previewUrl} alt="Preview makanan" style={{ borderRadius: 20, width: '100%', objectFit: 'cover' }} />
@@ -154,14 +150,12 @@ export function ScanPage() {
             )}
           </div>
         </div>
-
         <div className="stack">
           <div className="metric">
             <p className="metric-label">Detections</p>
             <h4 className="metric-value">{totalDetections}</h4>
             <p className="metric-note">Jumlah makanan yang berhasil dikenali dari foto Anda.</p>
           </div>
-
           <div className="card">
             <div className="toolbar" style={{ justifyContent: 'space-between' }}>
               <h4 className="card-title">Riwayat terakhir</h4>
@@ -180,7 +174,6 @@ export function ScanPage() {
               <div className="empty-state" style={{ marginTop: 12 }}>Belum ada riwayat scan yang tersimpan.</div>
             )}
           </div>
-
           {result?.detections?.length ? result.detections.map(renderDetection) : (
             <div className="empty-state">
               Hasil scan akan tampil di sini setelah gambar diproses.
@@ -191,3 +184,4 @@ export function ScanPage() {
     </MotionSection>
   );
 }
+
