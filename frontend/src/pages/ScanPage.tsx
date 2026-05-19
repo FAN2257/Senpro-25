@@ -1,4 +1,4 @@
-﻿import { ChangeEvent, useMemo, useState } from 'react';
+﻿import { ChangeEvent, useMemo, useRef, useState } from 'react';
 import { CameraOff, Clock3, ImagePlus, ScanSearch, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { predictFood } from '../lib/api';
@@ -10,6 +10,8 @@ const isMobileDevice = () => { return /Android|webOS|iPhone|iPad|iPod|BlackBerry
 
 export function ScanPage() {
   const [isMobile] = useState(isMobileDevice());
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const {
     file,
     previewUrl,
@@ -27,15 +29,24 @@ export function ScanPage() {
 
   const totalDetections = useMemo(() => result?.detections.length ?? 0, [result]);
 
-  const captureMode = (isMobile ? 'environment' : undefined) as React.InputHTMLAttributes<HTMLInputElement>['capture'];
-
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
-    setFile(selectedFile);
+    event.target.value = '';
 
-    if (selectedFile) {
-      toast.success('Foto siap diproses.');
+    if (!selectedFile) {
+      return;
     }
+
+    setFile(selectedFile);
+    toast.success('Foto siap diproses.');
+  };
+
+  const openGalleryPicker = () => {
+    galleryInputRef.current?.click();
+  };
+
+  const openCameraPicker = () => {
+    cameraInputRef.current?.click();
   };
 
   const handleSubmit = async () => {
@@ -125,8 +136,36 @@ export function ScanPage() {
         <div className="form-card">
           <div className="field">
             <label className="field-label" htmlFor="food-image">Pilih gambar</label>
-            <input id="food-image" className="input" type="file" accept="image/*" capture={captureMode} onChange={handleFileChange} />
-            <p className="field-help">Di ponsel, kamera akan terbuka otomatis. Di desktop, Anda bisa pilih file foto.</p>
+            {isMobile ? (
+              <div className="mobile-upload-actions">
+                <input
+                  ref={galleryInputRef}
+                  id="food-image-gallery"
+                  className="sr-only"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                <input
+                  ref={cameraInputRef}
+                  id="food-image-camera"
+                  className="sr-only"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                />
+                <button className="btn btn-secondary" type="button" onClick={openGalleryPicker}>
+                  <ImagePlus size={16} /> Buka Galeri
+                </button>
+                <button className="btn btn-primary" type="button" onClick={openCameraPicker}>
+                  <ImagePlus size={16} /> Buka Kamera
+                </button>
+              </div>
+            ) : (
+              <input id="food-image" className="input" type="file" accept="image/*" onChange={handleFileChange} />
+            )}
+            <p className="field-help">Di ponsel, pilih galeri atau kamera. Di desktop, Anda bisa pilih file foto.</p>
           </div>
           <div className="form-actions" style={{ marginTop: 18 }}>
             <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={loading}>

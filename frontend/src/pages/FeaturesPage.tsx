@@ -46,9 +46,9 @@ const benefits = [
 
 export function FeaturesPage() {
   return (
-    <>
-      <MotionSection className="section" style={{ marginTop: 0, paddingTop: '60px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+    <div className="features-page">
+      <MotionSection className="section features-hero" style={{ marginTop: 0 }}>
+        <div className="features-hero-copy">
           <h1 className="page-title" style={{ marginBottom: '16px' }}>
             Fitur-Fitur SnapEats
           </h1>
@@ -57,7 +57,7 @@ export function FeaturesPage() {
           </p>
         </div>
 
-        <div className="grid-3" style={{ marginTop: '48px' }}>
+        <div className="grid-3 features-grid">
           {features.map(({ icon: Icon, title, description }) => (
             <article className="feature-card" key={title}>
               <div className="feature-icon">
@@ -112,6 +112,6 @@ export function FeaturesPage() {
         </div>
         <FoodsPage />
       </MotionSection>
-    </>
+    </div>
   );
 }

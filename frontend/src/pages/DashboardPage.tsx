@@ -4,7 +4,13 @@ import { MotionSection } from '../components/MotionSection';
 
 export function DashboardPage() {
   return (
-    <>
+    <div className="home-landing">
+      <div className="landing-ambient" aria-hidden="true">
+        <span className="ambient-blob ambient-blob-1" />
+        <span className="ambient-blob ambient-blob-2" />
+        <span className="ambient-blob ambient-blob-3" />
+      </div>
+
       {/* Full-page Landing Section */}
       <div className="landing-hero">
         <div className="landing-hero-content">
@@ -19,15 +25,6 @@ export function DashboardPage() {
           <Link to="/scan" className="btn btn-primary btn-large">
             Scan Now <ArrowRight size={20} />
           </Link>
-        </div>
-        
-        <div className="landing-hero-visual">
-          <div className="visual-blob-1"></div>
-          <div className="visual-blob-2"></div>
-          <div className="visual-food-icon">🍜</div>
-          <div className="visual-food-icon">🍲</div>
-          <div className="visual-food-icon">🥗</div>
-          <div className="visual-scanner">📱</div>
         </div>
       </div>
 
@@ -54,6 +51,6 @@ export function DashboardPage() {
           </div>
         </div>
       </MotionSection>
-    </>
+    </div>
   );
 }
