@@ -1,6 +1,7 @@
 import { Camera, Activity, History, Lock, Zap, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MotionSection } from '../components/MotionSection';
+import { FoodsPage } from './FoodsPage';
 
 const features = [
   {
@@ -102,6 +103,14 @@ export function FeaturesPage() {
         <Link to="/" className="btn btn-secondary">
           Kembali ke Beranda
         </Link>
+      </MotionSection>
+
+      <MotionSection className="section" delay={0.25}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <h2 className="section-title">Referensi Makanan</h2>
+          <p className="section-description">Contoh daftar makanan yang tersedia di SnapEats.</p>
+        </div>
+        <FoodsPage />
       </MotionSection>
     </>
   );
