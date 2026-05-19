@@ -1,7 +1,8 @@
 /* Landing Hero Section */
 .landing-hero {
   position: relative;
-  min-height: 100vh;
+  /* make hero fill viewport while accounting for topbar space */
+  min-height: calc(100vh - 96px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,8 +10,12 @@
   overflow: hidden;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 247, 251, 0.95) 50%, rgba(238, 244, 248, 0.95) 100%);
   border-radius: 0;
-  margin: -24px -24px 0 -24px;
-  padding: 60px 24px;
+  /* keep full-bleed look but avoid horizontal overflow on small screens */
+  margin: 0 -24px 0 -24px;
+  padding: 48px 24px;
+  box-sizing: border-box;
+  width: calc(100% + 48px);
+  max-width: none;
 }
 
 .landing-hero::before {
@@ -376,9 +381,11 @@
 
 @media (max-width: 900px) {
   .landing-hero {
-    margin: -16px -16px 0 -16px;
-    padding: 40px 16px;
-    min-height: auto;
+    /* on small screens avoid negative margins and reduce height/padding */
+    margin: 0;
+    width: 100%;
+    padding: 32px 16px;
+    min-height: calc(100vh - 72px);
   }
 
   .landing-logo {
