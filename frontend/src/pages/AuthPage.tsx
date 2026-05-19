@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { CheckCircle2, LockKeyhole, UserRound } from 'lucide-react';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { hasSupabaseConfig, supabase } from '../lib/supabase';
 
 type AuthMode = 'login' | 'register';
@@ -47,7 +48,7 @@ export function AuthPage() {
 
     syncSession();
 
-    const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = client.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setSessionEmail(session?.user.email ?? null);
       setSessionReady(true);
     });

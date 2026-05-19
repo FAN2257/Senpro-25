@@ -34,7 +34,13 @@ Pastikan `frontend/.env.local` berisi:
 ```env
 VITE_API_BASE_URL=http://localhost:8000
 VITE_SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_OR_PUBLISHABLE_KEY>
+```
+
+Jika Anda memakai key publishable dari dashboard Supabase, isi `VITE_SUPABASE_PUBLISHABLE_KEY` sebagai gantinya:
+
+```env
+VITE_SUPABASE_PUBLISHABLE_KEY=<SUPABASE_PUBLISHABLE_KEY>
 ```
 
 Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-auth-testing.md).
