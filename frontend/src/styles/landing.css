@@ -16,45 +16,53 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  overflow: hidden;
 }
 
-.ambient-blob {
+.ambient-illustration {
   position: absolute;
-  border-radius: 999px;
-  filter: blur(82px);
-  opacity: 0.34;
+  width: clamp(96px, 12vw, 176px);
+  height: auto;
+  filter: drop-shadow(0 18px 30px rgba(15, 23, 42, 0.12));
+  opacity: 0.92;
   transform: translate3d(0, 0, 0);
-  animation: floatBlob 12s ease-in-out infinite;
+  animation: floatIllustration 12s ease-in-out infinite;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.ambient-blob-1 {
-  width: 320px;
-  height: 320px;
-  top: 8%;
-  left: -90px;
-  background: rgba(15, 118, 110, 0.16);
+.ambient-illustration-1 {
+  top: 12%;
+  left: clamp(-40px, -4vw, -12px);
+  transform: rotate(-10deg);
 }
 
-.ambient-blob-2 {
-  width: 260px;
-  height: 260px;
+.ambient-illustration-2 {
   top: 18%;
-  right: -70px;
-  background: rgba(249, 115, 22, 0.14);
+  right: clamp(-26px, -2vw, 10px);
+  width: clamp(88px, 11vw, 150px);
+  transform: rotate(8deg);
   animation-duration: 14s;
   animation-direction: reverse;
 }
 
-.ambient-blob-3 {
-  width: 240px;
-  height: 240px;
-  bottom: 14%;
-  left: 14%;
-  background: rgba(20, 184, 166, 0.12);
-  animation-duration: 16s;
+.ambient-illustration-3 {
+  bottom: 12%;
+  left: 8%;
+  width: clamp(92px, 11vw, 156px);
+  transform: rotate(14deg);
+  animation-duration: 15s;
 }
 
-@keyframes floatBlob {
+.ambient-illustration-4 {
+  bottom: 9%;
+  right: 10%;
+  width: clamp(82px, 10vw, 140px);
+  transform: rotate(-6deg);
+  animation-duration: 13s;
+}
+
+@keyframes floatIllustration {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -454,19 +462,32 @@
 }
 
 @media (max-width: 900px) {
-  .ambient-blob-1 {
-    left: -140px;
-    top: 4%;
+  .ambient-illustration {
+    opacity: 0.8;
   }
 
-  .ambient-blob-2 {
-    right: -130px;
-    top: 22%;
+  .ambient-illustration-1 {
+    left: -38px;
+    top: 10%;
+    width: 112px;
   }
 
-  .ambient-blob-3 {
-    left: -30px;
-    bottom: 10%;
+  .ambient-illustration-2 {
+    right: -24px;
+    top: 16%;
+    width: 104px;
+  }
+
+  .ambient-illustration-3 {
+    left: -10px;
+    bottom: 12%;
+    width: 110px;
+  }
+
+  .ambient-illustration-4 {
+    right: 4px;
+    bottom: 8%;
+    width: 96px;
   }
 
   .landing-hero {
