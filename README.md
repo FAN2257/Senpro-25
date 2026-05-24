@@ -18,7 +18,7 @@ Workspace ini dikonfigurasi agar backend dan frontend otomatis berjalan ketika f
 
 - Task auto-start ada di [.vscode/tasks.json](.vscode/tasks.json).
 - Backend dijalankan dari `backend/.venv` dengan `uvicorn api:app --host 0.0.0.0 --port 8000 --reload`.
-- Frontend dijalankan dari `frontend` dengan `npm install` lalu `npm run dev`.
+- Frontend dijalankan dari `frontend`; skripnya akan install dependency hanya jika `node_modules` belum ada, lalu menjalankan `npm run dev`.
 
 ### Manual fallback
 
@@ -29,7 +29,7 @@ Kalau perlu menjalankan manual, pakai dua script ini:
 
 Catatan:
 - `scripts/start-backend.cmd` akan membuat `.venv` jika belum ada, lalu memasang dependency backend dari `requirements.txt`.
-- `scripts/start-frontend.cmd` akan menjalankan `npm install` sebelum `npm run dev`.
+- `scripts/start-frontend.cmd` akan memasang dependency frontend hanya saat `node_modules` belum ada, lalu menjalankan Vite dev server.
 
 ### Langkah run dari clone baru
 

@@ -69,6 +69,8 @@ Atau dari root repo pakai script:
 scripts/start-frontend.cmd
 ```
 
+Script `scripts/start-frontend.cmd` akan mengecek `node_modules` terlebih dahulu. Kalau folder itu belum ada, dependency akan dipasang otomatis sekali saja, lalu Vite dijalankan.
+
 Jika backend FastAPI berjalan di port 8000, frontend akan otomatis memakai:
 
 ```bash
