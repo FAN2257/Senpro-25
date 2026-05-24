@@ -18,7 +18,7 @@ Workspace ini dikonfigurasi agar backend dan frontend otomatis berjalan ketika f
 
 - Task auto-start ada di [.vscode/tasks.json](.vscode/tasks.json).
 - Backend dijalankan dari `backend/.venv` dengan `uvicorn api:app --host 0.0.0.0 --port 8000 --reload`.
-- Frontend dijalankan dari `frontend` dengan `npm run dev`.
+- Frontend dijalankan dari `frontend` dengan `npm install` lalu `npm run dev`.
 
 ### Manual fallback
 
@@ -26,6 +26,33 @@ Kalau perlu menjalankan manual, pakai dua script ini:
 
 - `scripts/start-backend.cmd`
 - `scripts/start-frontend.cmd`
+
+Catatan:
+- `scripts/start-backend.cmd` akan membuat `.venv` jika belum ada, lalu memasang dependency backend dari `requirements.txt`.
+- `scripts/start-frontend.cmd` akan menjalankan `npm install` sebelum `npm run dev`.
+
+### Langkah run dari clone baru
+
+Kalau baru clone repo di device lain, urutan yang paling aman adalah:
+
+```powershell
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+
+cd ..\frontend
+npm install
+```
+
+Setelah itu jalankan salah satu opsi berikut:
+
+```powershell
+scripts\start-backend.cmd
+scripts\start-frontend.cmd
+```
+
+Atau jalankan lewat task VS Code yang sudah disediakan.
 
 ### Environment frontend
 
@@ -50,4 +77,10 @@ Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-a
 ```powershell
 curl http://localhost:8000/
 curl http://localhost:8000/foods
+```
+
+Untuk frontend, buka alamat Vite yang muncul di terminal, biasanya:
+
+```text
+http://localhost:5173
 ```

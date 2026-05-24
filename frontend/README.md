@@ -50,10 +50,23 @@ frontend/
 
 ## Cara jalan
 
+Kalau menjalankan untuk pertama kali atau di device baru:
+
 ```bash
 cd frontend
 npm install
+```
+
+Lalu jalankan development server:
+
+```bash
 npm run dev
+```
+
+Atau dari root repo pakai script:
+
+```bash
+scripts/start-frontend.cmd
 ```
 
 Jika backend FastAPI berjalan di port 8000, frontend akan otomatis memakai:
