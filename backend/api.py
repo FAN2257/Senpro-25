@@ -18,6 +18,11 @@ import uvicorn
 
 from db import initialize_database, is_database_ready, list_meal_history, save_meal_history
 
+# PyTorch 2.6 changes torch.load() to weights_only=True by default, which can
+# block older Ultralytics checkpoints during startup on Azure App Service.
+# Force the legacy load path so best.pt can be deserialized normally.
+os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
+
 BASE_DIR = os.path.dirname(__file__)
 BASE_PATH = Path(__file__).resolve().parent
 API_PREFIX = "/api"

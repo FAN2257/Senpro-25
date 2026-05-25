@@ -27,6 +27,14 @@ export interface NutritionPredictionResponse {
   detections: DetectionItem[];
 }
 
+export interface ModelStatusResponse {
+  status: string;
+  model_path: string;
+  model_path_exists: boolean;
+  model_loaded: boolean;
+  load_error: string | null;
+}
+
 export interface FoodsResponse {
   status: string;
   total_items: number;

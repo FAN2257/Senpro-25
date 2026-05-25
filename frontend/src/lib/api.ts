@@ -4,6 +4,7 @@ import {
   MealCalculationResponse,
   MealHistoryResponse,
   MealRequest,
+  ModelStatusResponse,
   NutritionPredictionResponse,
   SaveMealHistoryPayload,
   SaveMealHistoryResponse
@@ -78,6 +79,10 @@ export function saveMealHistory(payload: SaveMealHistoryPayload) {
     },
     body: JSON.stringify(payload)
   });
+}
+
+export function getModelStatus() {
+  return apiFetch<ModelStatusResponse>('/model-status');
 }
 
 export function getApiBaseUrl() {

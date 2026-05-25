@@ -1,7 +1,7 @@
-﻿import { ChangeEvent, useMemo, useRef, useState } from 'react';
+﻿import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { CameraOff, Clock3, ImagePlus, ScanSearch, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { predictFood } from '../lib/api';
+import { getModelStatus, predictFood } from '../lib/api';
 import type { DetectionItem } from '../types/api';
 import { useScanStore } from '../store/scanStore';
 import { MotionSection } from '../components/MotionSection';
@@ -10,6 +10,8 @@ const isMobileDevice = () => { return /Android|webOS|iPhone|iPad|iPod|BlackBerry
 
 export function ScanPage() {
   const [isMobile] = useState(isMobileDevice());
+  const [modelReady, setModelReady] = useState(false);
+  const [modelStatusText, setModelStatusText] = useState('Memeriksa kesiapan model...');
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const {
@@ -28,6 +30,38 @@ export function ScanPage() {
   } = useScanStore();
 
   const totalDetections = useMemo(() => result?.detections.length ?? 0, [result]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const refreshModelStatus = async () => {
+      try {
+        const status = await getModelStatus();
+        if (!mounted) return;
+
+        setModelReady(status.model_loaded);
+        setModelStatusText(
+          status.model_loaded
+            ? 'Model siap dipakai'
+            : status.load_error
+              ? `Model belum siap: ${status.load_error}`
+              : 'Model masih warming up'
+        );
+      } catch {
+        if (!mounted) return;
+        setModelReady(false);
+        setModelStatusText('Tidak bisa memeriksa status backend');
+      }
+    };
+
+    void refreshModelStatus();
+    const intervalId = window.setInterval(refreshModelStatus, 5000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
@@ -52,6 +86,13 @@ export function ScanPage() {
   const handleSubmit = async () => {
     if (!file) {
       const message = 'Pilih gambar makanan terlebih dahulu.';
+      setError(message);
+      toast.error(message);
+      return;
+    }
+
+    if (!modelReady) {
+      const message = 'Model masih memuat, tunggu sebentar lalu coba lagi.';
       setError(message);
       toast.error(message);
       return;
@@ -129,8 +170,11 @@ export function ScanPage() {
           <p className="section-description">Unggah foto makanan, lalu lihat ringkasan hasilnya dengan cepat dan jelas.</p>
         </div>
         <span className="chip">
-          <Sparkles size={14} /> Siap dipakai
+          <Sparkles size={14} /> {modelReady ? 'Siap dipakai' : 'Memuat model'}
         </span>
+      </div>
+      <div className="empty-state" style={{ marginBottom: 16 }}>
+        {modelStatusText}
       </div>
       <div className="grid-2">
         <div className="form-card">
@@ -168,7 +212,7 @@ export function ScanPage() {
             <p className="field-help">Di ponsel, pilih galeri atau kamera. Di desktop, Anda bisa pilih file foto.</p>
           </div>
           <div className="form-actions" style={{ marginTop: 18 }}>
-            <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={loading}>
+            <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={loading || !modelReady}>
               <ScanSearch size={16} /> {loading ? 'Memproses...' : 'Analisis Gambar'}
             </button>
             <button className="btn btn-secondary" type="button" onClick={reset}>
