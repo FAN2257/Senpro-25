@@ -3,12 +3,30 @@ import { CameraOff, Clock3, ImagePlus, ScanSearch, Sparkles } from 'lucide-react
 import toast from 'react-hot-toast';
 import { getCurrentUserEmail, getModelStatus, predictFood, saveMealHistory } from '../lib/api';
 import type { DetectionItem } from '../types/api';
+import { formatNutrition } from '../lib/nutrition';
 import { useScanStore } from '../store/scanStore';
 import { MotionSection } from '../components/MotionSection';
 
 const isMobileDevice = () => { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); };
 
 const NUTRITION_KEYS = ['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'P', 'Fe', 'Water'] as const;
+
+const DEFAULT_PORTION_GRAM = 100;
+
+function scaleNutrition(
+  nutrition: Record<(typeof NUTRITION_KEYS)[number], number>,
+  portionGram: number,
+) {
+  const ratio = portionGram / DEFAULT_PORTION_GRAM;
+
+  return NUTRITION_KEYS.reduce(
+    (accumulator, key) => ({
+      ...accumulator,
+      [key]: Number((nutrition[key] * ratio).toFixed(2))
+    }),
+    {} as Record<(typeof NUTRITION_KEYS)[number], number>
+  );
+}
 
 function buildScanSummary(detections: DetectionItem[]) {
   const totalNutrition = NUTRITION_KEYS.reduce((accumulator, key) => ({ ...accumulator, [key]: 0 }), {} as Record<(typeof NUTRITION_KEYS)[number], number>);
@@ -49,6 +67,7 @@ export function ScanPage() {
   const [modelReady, setModelReady] = useState(false);
   const [modelStatusText, setModelStatusText] = useState('Memeriksa kesiapan model...');
   const [scanInsights, setScanInsights] = useState<ReturnType<typeof buildScanSummary> | null>(null);
+  const [portionGram, setPortionGram] = useState(DEFAULT_PORTION_GRAM);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const {
@@ -67,6 +86,22 @@ export function ScanPage() {
   } = useScanStore();
 
   const totalDetections = useMemo(() => result?.detections.length ?? 0, [result]);
+
+  const displayNutrition = useMemo(() => {
+    if (!scanInsights) {
+      return null;
+    }
+
+    return scaleNutrition(scanInsights.totalNutrition, portionGram);
+  }, [scanInsights, portionGram]);
+
+  const dominantFoodDisplay = useMemo(() => {
+    if (!scanInsights?.dominantFood || typeof scanInsights.dominantFood.nutrition_info === 'string') {
+      return null;
+    }
+
+    return scaleNutrition(scanInsights.dominantFood.nutrition_info as Record<(typeof NUTRITION_KEYS)[number], number>, portionGram);
+  }, [scanInsights, portionGram]);
 
   useEffect(() => {
     if (!result?.detections.length) {
@@ -155,12 +190,13 @@ export function ScanPage() {
       try {
         const userEmail = await getCurrentUserEmail();
         const summary = buildScanSummary(response.detections);
+        const scaledTotalNutrition = scaleNutrition(summary.totalNutrition, portionGram);
 
         await saveMealHistory({
           meal_label: `Scan ${new Date().toLocaleString('id-ID')}`,
           user_email: userEmail,
           food_items: summary.foodItems,
-          total_nutrition: summary.totalNutrition,
+          total_nutrition: scaledTotalNutrition,
           details: response.detections,
           source: 'scan'
         });
@@ -184,6 +220,7 @@ export function ScanPage() {
 
   const renderDetection = (item: DetectionItem) => {
     const nutrition = typeof item.nutrition_info === 'string' ? null : item.nutrition_info;
+    const displayedNutrition = nutrition ? scaleNutrition(nutrition as Record<(typeof NUTRITION_KEYS)[number], number>, portionGram) : null;
     return (
       <article className="result-card" key={`${item.food_name}-${item.confidence}`}>
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
@@ -206,12 +243,12 @@ export function ScanPage() {
               </p>
             </div>
           </div>
-          {nutrition ? (
+              {nutrition ? (
             <div className="list">
               {['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'Fe'].map((key) => (
                 <div className="list-item" key={key}>
                   <strong>{key}</strong>
-                  <span>{(nutrition as any)[key] ?? 0}</span>
+                  <span>{formatNutrition(key, displayedNutrition ? displayedNutrition[key as keyof typeof displayedNutrition] : 0)}</span>
                 </div>
               ))}
             </div>
@@ -308,13 +345,30 @@ export function ScanPage() {
                 <h4 className="card-title">Analitik cepat</h4>
                 <span className="chip">Snapshot scan ini</span>
               </div>
+              <div className="field" style={{ marginTop: 12 }}>
+                <label className="field-label" htmlFor="portion-gram">Basis porsi tampilan</label>
+                <input
+                  id="portion-gram"
+                  className="input"
+                  type="number"
+                  min={1}
+                  value={portionGram}
+                  onChange={(event) => setPortionGram(Math.max(1, Number(event.target.value) || DEFAULT_PORTION_GRAM))}
+                />
+                <p className="field-help">Nilai di bawah akan disesuaikan dari basis 100 g ke porsi yang Anda pilih.</p>
+              </div>
               <div className="grid-2" style={{ marginTop: 12 }}>
                 <div className="list">
-                  <div className="list-item"><strong>Kalori total</strong><span>{scanInsights.totalNutrition.Energy ?? 0}</span></div>
-                  <div className="list-item"><strong>Protein</strong><span>{scanInsights.totalNutrition.Protein ?? 0}</span></div>
-                  <div className="list-item"><strong>Lemak</strong><span>{scanInsights.totalNutrition.Fat ?? 0}</span></div>
-                  <div className="list-item"><strong>Karbohidrat</strong><span>{scanInsights.totalNutrition.CHO ?? 0}</span></div>
+                  <div className="list-item"><strong>Kalori total</strong><span>{formatNutrition('Energy', displayNutrition?.Energy ?? 0)}</span></div>
+                  <div className="list-item"><strong>Protein</strong><span>{formatNutrition('Protein', displayNutrition?.Protein ?? 0)}</span></div>
+                  <div className="list-item"><strong>Lemak</strong><span>{formatNutrition('Fat', displayNutrition?.Fat ?? 0)}</span></div>
+                  <div className="list-item"><strong>Karbohidrat</strong><span>{formatNutrition('CHO', displayNutrition?.CHO ?? 0)}</span></div>
                 </div>
+                  <p className="footer-note" style={{ marginTop: 8 }}>
+                    Nilai ditampilkan berdasarkan basis porsi di atas. {scanInsights.dominantFood && dominantFoodDisplay ? (
+                      `Contoh: dalam ${portionGram} g ${scanInsights.dominantFood.food_name} mengandung ${formatNutrition('Energy', dominantFoodDisplay.Energy)}, ${formatNutrition('Protein', dominantFoodDisplay.Protein)}, ${formatNutrition('Fat', dominantFoodDisplay.Fat)} dan ${formatNutrition('CHO', dominantFoodDisplay.CHO)}.`
+                    ) : 'Contoh per-porsi tersedia jika data nutrisi untuk item terdeteksi.'}
+                  </p>
                 <div className="stack">
                   <div className="empty-state" style={{ marginBottom: 0 }}>
                     <strong>Food summary</strong>

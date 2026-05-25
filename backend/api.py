@@ -1,4 +1,18 @@
 import os
+# Ensure headless operation for libraries that may pull GUI/Qt/X11 backends.
+# This helps App Service's linux image where libxcb and related X11 libraries
+# are not available. Set these before any import that may trigger GUI libs
+# (e.g. matplotlib, Qt, or other visualization components inside ultralytics).
+import tempfile
+
+# Prefer a writable temp directory for matplotlib's config to avoid permission issues.
+mpl_config_dir = os.path.join(tempfile.gettempdir(), "matplotlib")
+os.environ.setdefault("MPLBACKEND", "Agg")
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ.setdefault("DISPLAY", "")
+os.environ.setdefault("MPLCONFIGDIR", mpl_config_dir)
+os.makedirs(mpl_config_dir, exist_ok=True)
+
 import json
 import io
 import traceback
@@ -76,6 +90,17 @@ def load_assets():
     global model, nutrition_data, model_load_error
     # Load Model YOLO
     try:
+        # Ensure matplotlib backend is set to Agg and pre-initialize font cache
+        # inside the writable MPLCONFIGDIR to avoid font/cache operations later
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+            # importing pyplot will build font cache in MPLCONFIGDIR if needed
+            import matplotlib.pyplot as _plt
+            _plt.close('all')
+        except Exception:
+            # Not fatal; proceed. We set MPLBACKEND and MPLCONFIGDIR at process start.
+            pass
         try:
             from ultralytics import YOLO
         except Exception as ie:
