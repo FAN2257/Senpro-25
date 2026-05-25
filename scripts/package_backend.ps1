@@ -8,14 +8,20 @@ Push-Location $repoRoot
 Write-Host "Building frontend..."
 Set-Location (Join-Path $repoRoot 'frontend')
 
-# Install dependencies and build
-Write-Host "Running npm ci"
-npm ci
-if ($LASTEXITCODE -ne 0) { throw "npm ci failed with exit code $LASTEXITCODE" }
+# Reuse an existing production build if one is already present.
+$frontendDist = Join-Path $repoRoot 'frontend\dist\index.html'
+if (-not (Test-Path $frontendDist)) {
+	# Install dependencies only if the frontend build output is missing.
+	Write-Host "Running npm ci"
+	npm ci
+	if ($LASTEXITCODE -ne 0) { throw "npm ci failed with exit code $LASTEXITCODE" }
 
-Write-Host "Running npm run build"
-npm run build
-if ($LASTEXITCODE -ne 0) { throw "npm run build failed with exit code $LASTEXITCODE" }
+	Write-Host "Running npm run build"
+	npm run build
+	if ($LASTEXITCODE -ne 0) { throw "npm run build failed with exit code $LASTEXITCODE" }
+} else {
+	Write-Host "Frontend dist already exists; skipping npm ci and build"
+}
 
 # Copy build into backend static
 Write-Host "Copying frontend/dist -> backend/static"
