@@ -1,6 +1,7 @@
 import os
 import json
 import io
+import traceback
 from pathlib import Path
 from typing import Any, Optional
 
@@ -72,12 +73,13 @@ def load_assets():
         try:
             from ultralytics import YOLO
         except Exception as ie:
-            raise RuntimeError(f"ultralytics import failed: {ie}")
+            raise RuntimeError(f"ultralytics import failed: {ie}") from ie
 
         model = YOLO(MODEL_PATH)
         print(f"[INFO] Model loaded from {MODEL_PATH}")
     except Exception as e:
         print(f"[WARNING] Model tidak dapat dimuat. AI inference akan dinonaktifkan. Error: {e}")
+        print(traceback.format_exc())
 
     # Load Dataset JSON
     try:
