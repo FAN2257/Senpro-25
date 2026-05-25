@@ -49,6 +49,7 @@ JSON_PATH = next((p for p in possible_json_paths if os.path.exists(p)), possible
 # Inisialisasi variabel global
 model = None
 nutrition_data = {}
+model_load_error = None
 
 
 class MealHistoryItem(BaseModel):
@@ -67,7 +68,7 @@ class MealHistoryEntry(BaseModel):
 
 @app.on_event("startup")
 def load_assets():
-    global model, nutrition_data
+    global model, nutrition_data, model_load_error
     # Load Model YOLO
     try:
         try:
@@ -76,8 +77,10 @@ def load_assets():
             raise RuntimeError(f"ultralytics import failed: {ie}") from ie
 
         model = YOLO(MODEL_PATH)
+        model_load_error = None
         print(f"[INFO] Model loaded from {MODEL_PATH}")
     except Exception as e:
+        model_load_error = str(e)
         print(f"[WARNING] Model tidak dapat dimuat. AI inference akan dinonaktifkan. Error: {e}")
         print(traceback.format_exc())
 
@@ -157,7 +160,10 @@ def service_worker_asset():
 @app.post(f"{API_PREFIX}/predict")
 async def predict_food(file: UploadFile = File(...)):
     if model is None:
-        raise HTTPException(status_code=500, detail="Model YOLO belum tersedia/tidak terbaca. Pastikan proses training sudah selesai.")
+        detail = "Model YOLO belum tersedia/tidak terbaca. Pastikan proses training sudah selesai."
+        if model_load_error:
+            detail = f"{detail} Penyebab runtime: {model_load_error}"
+        raise HTTPException(status_code=503, detail=detail)
 
     # Membaca file gambar dari request API
     try:
@@ -204,6 +210,17 @@ async def predict_food(file: UploadFile = File(...)):
             response_data["detections"].append(detection)
 
     return response_data
+
+
+@app.get(f"{API_PREFIX}/model-status")
+def get_model_status():
+    return {
+        "status": "success",
+        "model_path": MODEL_PATH,
+        "model_path_exists": os.path.exists(MODEL_PATH),
+        "model_loaded": model is not None,
+        "load_error": model_load_error,
+    }
 
 
 from pydantic import BaseModel
