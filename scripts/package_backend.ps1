@@ -29,11 +29,39 @@ Set-Location $repoRoot
 if (-Not (Test-Path backend\static)) { New-Item -ItemType Directory -Path backend\static | Out-Null }
 robocopy frontend\dist backend\static /MIR | Out-Null
 
+# Stage only the deployable backend files to keep the zip small and clean.
+$stagingDir = Join-Path $repoRoot '_backend_package'
+if (Test-Path $stagingDir) { Remove-Item $stagingDir -Recurse -Force }
+New-Item -ItemType Directory -Path $stagingDir | Out-Null
+
+$deployFiles = @(
+	'.deployment',
+	'.gitignore',
+	'api.py',
+	'APP_SERVICE_SETUP.md',
+	'best.pt',
+	'db.py',
+	'nutrition_mapping.json',
+	'README.md',
+	'requirements.txt'
+)
+
+foreach ($file in $deployFiles) {
+	$sourcePath = Join-Path $repoRoot ("backend\" + $file)
+	if (Test-Path $sourcePath) {
+		Copy-Item $sourcePath $stagingDir -Force
+	}
+}
+
+Copy-Item backend\static (Join-Path $stagingDir 'static') -Recurse -Force
+
 # Create zip package
 $zipPath = Join-Path $repoRoot "backend.zip"
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 Write-Host "Creating $zipPath"
-Compress-Archive -Path backend\* -DestinationPath $zipPath -Force
+Compress-Archive -Path (Join-Path $stagingDir '*') -DestinationPath $zipPath -Force
+
+if (Test-Path $stagingDir) { Remove-Item $stagingDir -Recurse -Force }
 
 Write-Host "Packaged: $zipPath"
 
