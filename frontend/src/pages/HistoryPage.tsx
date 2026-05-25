@@ -17,6 +17,24 @@ export function HistoryPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const totalItems = useMemo(() => items.length, [items]);
+  const latestSavedEntry = useMemo(() => savedHistory[0] ?? null, [savedHistory]);
+
+  const latestNutrition = useMemo(() => {
+    if (!latestSavedEntry) {
+      return null;
+    }
+
+    const totalNutrition = latestSavedEntry.total_nutrition;
+
+    return {
+      energy: totalNutrition.Energy ?? 0,
+      protein: totalNutrition.Protein ?? 0,
+      fat: totalNutrition.Fat ?? 0,
+      cho: totalNutrition.CHO ?? 0,
+      calcium: totalNutrition.Ca ?? 0,
+      iron: totalNutrition.Fe ?? 0
+    };
+  }, [latestSavedEntry]);
 
   useEffect(() => {
     let isActive = true;
@@ -143,6 +161,43 @@ export function HistoryPage() {
           )}
         </div>
       </div>
+
+      {latestSavedEntry && latestNutrition ? (
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+            <h4 className="card-title">Ringkasan analitik terakhir</h4>
+            <span className="chip">{latestSavedEntry.source === 'scan' ? 'Hasil scan' : latestSavedEntry.source}</span>
+          </div>
+          <div className="grid-3" style={{ marginTop: 16 }}>
+            <div className="empty-state">
+              <strong>{latestSavedEntry.meal_label ?? 'Menu tersimpan'}</strong>
+              <div className="muted" style={{ marginTop: 8 }}>
+                {new Date(latestSavedEntry.created_at).toLocaleString('id-ID')}
+              </div>
+            </div>
+            <div className="empty-state">
+              <strong>Kalori total</strong>
+              <div className="metric-value" style={{ marginTop: 8 }}>{latestNutrition.energy}</div>
+            </div>
+            <div className="empty-state">
+              <strong>Item</strong>
+              <div className="metric-value" style={{ marginTop: 8 }}>{latestSavedEntry.food_items.length}</div>
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginTop: 16 }}>
+            <div className="list">
+              <div className="list-item"><strong>Protein</strong><span>{latestNutrition.protein}</span></div>
+              <div className="list-item"><strong>Lemak</strong><span>{latestNutrition.fat}</span></div>
+              <div className="list-item"><strong>Karbohidrat</strong><span>{latestNutrition.cho}</span></div>
+            </div>
+            <div className="list">
+              <div className="list-item"><strong>Kalsium</strong><span>{latestNutrition.calcium}</span></div>
+              <div className="list-item"><strong>Zat Besi</strong><span>{latestNutrition.iron}</span></div>
+              <div className="list-item"><strong>Detail scan</strong><span>{latestSavedEntry.details.length} entri</span></div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="card">
         <h4 className="card-title">Kenapa fitur ini berguna</h4>
