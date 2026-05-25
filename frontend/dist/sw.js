@@ -1,6 +1,6 @@
-const CACHE_NAME = 'snapeats-shell-v1';
-const API_CACHE_NAME = 'snapeats-api-v1';
-const APP_SHELL_ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
+const CACHE_NAME = 'snapeats-shell-v2';
+const API_CACHE_NAME = 'snapeats-api-v2';
+const APP_SHELL_ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg', '/LogoSnapEats.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -62,15 +62,15 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  const isAppAsset = url.origin === self.location.origin;
-  const isApiFoods = url.pathname.startsWith('/foods');
+  const isApiRequest = url.origin === self.location.origin && url.pathname.startsWith('/api/');
+  const isAppAsset = url.origin === self.location.origin && !isApiRequest;
 
-  if (isAppAsset) {
-    event.respondWith(staleWhileRevalidate(request, CACHE_NAME));
+  if (isApiRequest) {
+    event.respondWith(networkFirst(request, API_CACHE_NAME));
     return;
   }
 
-  if (isApiFoods) {
-    event.respondWith(networkFirst(request, API_CACHE_NAME));
+  if (isAppAsset) {
+    event.respondWith(staleWhileRevalidate(request, CACHE_NAME));
   }
 });
