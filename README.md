@@ -72,6 +72,57 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<SUPABASE_PUBLISHABLE_KEY>
 
 Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-auth-testing.md).
 
+### Environment backend untuk Azure SQL
+
+Di App Service backend, set application settings berikut:
+
+```env
+AZURE_SQL_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:<server>.database.windows.net,1433;Database=<database>;Uid=<username>;Pwd=<password>;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;
+```
+
+Jika ingin memecah variabelnya, backend juga menerima:
+
+```env
+AZURE_SQL_SERVER=tcp:<server>.database.windows.net,1433
+AZURE_SQL_DATABASE=<database>
+AZURE_SQL_USERNAME=<username>
+AZURE_SQL_PASSWORD=<password>
+AZURE_SQL_DRIVER=ODBC Driver 18 for SQL Server
+```
+
+Backend akan membuat tabel `dbo.meal_history` otomatis saat koneksi Azure SQL berhasil.
+
+### Deploy ke Azure App Service
+
+Struktur yang paling aman untuk repo ini adalah 2 App Service:
+
+1. `snapeats-backend` untuk FastAPI.
+2. `snapeats-frontend` untuk hasil build Vite.
+
+Langkah backend:
+
+1. Buat App Service Python di Linux.
+2. Set startup command:
+
+```bash
+python -m uvicorn api:app --host 0.0.0.0 --port 8000
+```
+
+3. Set application settings backend:
+	- `AZURE_SQL_CONNECTION_STRING` atau empat variabel `AZURE_SQL_*`
+	- `PORT=8000`
+4. Deploy folder `backend/`.
+5. Pastikan firewall Azure SQL mengizinkan outbound App Service atau aktifkan opsi koneksi yang sesuai di portal Azure.
+
+Langkah frontend:
+
+1. Set build env `VITE_API_BASE_URL` ke URL backend App Service, misalnya `https://snapeats-backend.azurewebsites.net`.
+2. Jalankan `npm run build` di folder `frontend/`.
+3. Deploy isi folder `frontend/dist` ke App Service kedua.
+4. Untuk SPA routing, pastikan server frontend mengarahkan request selain file statis ke `index.html`.
+
+Jika Anda ingin satu App Service saja, backend FastAPI bisa juga menyajikan hasil build frontend, tetapi untuk repo ini 2 App Service lebih sederhana dan lebih mudah dipelihara.
+
 ### Cek cepat
 
 ```powershell

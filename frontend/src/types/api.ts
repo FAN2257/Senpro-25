@@ -47,3 +47,44 @@ export interface MealItem {
 export interface MealRequest {
   foods: MealItem[];
 }
+
+export interface MealCalculationResponse {
+  status: string;
+  total_nutrition: Record<string, number>;
+  details: unknown[];
+}
+
+export interface MealHistoryEntry {
+  id: string;
+  meal_label: string | null;
+  user_email: string | null;
+  food_items: MealItem[];
+  total_nutrition: Record<string, number>;
+  details: unknown[];
+  source: string;
+  created_at: string;
+}
+
+export interface MealHistoryResponse {
+  status: string;
+  total_items: number;
+  items: MealHistoryEntry[];
+}
+
+export interface SaveMealHistoryPayload {
+  meal_label?: string | null;
+  user_email?: string | null;
+  food_items: MealItem[];
+  total_nutrition: Record<string, number>;
+  details?: unknown[];
+  source?: string;
+}
+
+export interface SaveMealHistoryResponse {
+  status: string;
+  message: string;
+  record: {
+    id: string;
+    created_at: string;
+  };
+}

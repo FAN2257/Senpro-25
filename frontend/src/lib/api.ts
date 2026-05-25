@@ -1,4 +1,13 @@
-import { FoodDetailResponse, FoodsResponse, MealRequest, NutritionPredictionResponse } from '../types/api';
+import {
+  FoodDetailResponse,
+  FoodsResponse,
+  MealCalculationResponse,
+  MealHistoryResponse,
+  MealRequest,
+  NutritionPredictionResponse,
+  SaveMealHistoryPayload,
+  SaveMealHistoryResponse
+} from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -44,7 +53,21 @@ export function getFoodDetail(foodName: string) {
 }
 
 export function calculateMeal(payload: MealRequest) {
-  return apiFetch('/calculate', {
+  return apiFetch<MealCalculationResponse>('/calculate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function getMealHistory(limit = 10) {
+  return apiFetch<MealHistoryResponse>(`/history/meals?limit=${limit}`);
+}
+
+export function saveMealHistory(payload: SaveMealHistoryPayload) {
+  return apiFetch<SaveMealHistoryResponse>('/history/meals', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

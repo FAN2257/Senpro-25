@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { calculateMeal } from '../lib/api';
-import type { MealItem } from '../types/api';
+import { useEffect, useMemo, useState } from 'react';
+import { calculateMeal, getMealHistory, saveMealHistory } from '../lib/api';
+import type { MealCalculationResponse, MealHistoryEntry, MealItem } from '../types/api';
 
 const starterItems: MealItem[] = [
   { food_name: 'Nasi Padang', quantity_gram: 150 },
@@ -11,10 +11,40 @@ export function HistoryPage() {
   const [items, setItems] = useState<MealItem[]>(starterItems);
   const [foodName, setFoodName] = useState('');
   const [quantity, setQuantity] = useState(100);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<MealCalculationResponse | null>(null);
+  const [savedHistory, setSavedHistory] = useState<MealHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const totalItems = useMemo(() => items.length, [items]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadHistory = async () => {
+      setHistoryLoading(true);
+      try {
+        const response = await getMealHistory(10);
+        if (isActive) {
+          setSavedHistory(response.items);
+        }
+      } catch {
+        if (isActive) {
+          setSavedHistory([]);
+        }
+      } finally {
+        if (isActive) {
+          setHistoryLoading(false);
+        }
+      }
+    };
+
+    loadHistory();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const addItem = () => {
     if (!foodName.trim()) return;
@@ -28,6 +58,21 @@ export function HistoryPage() {
     try {
       const response = await calculateMeal({ foods: items });
       setResult(response);
+
+      try {
+        await saveMealHistory({
+          meal_label: `Menu ${new Date().toLocaleDateString('id-ID')}`,
+          food_items: items,
+          total_nutrition: response.total_nutrition,
+          details: response.details,
+          source: 'history-page'
+        });
+
+        const refreshed = await getMealHistory(10);
+        setSavedHistory(refreshed.items);
+      } catch {
+        // Riwayat tetap bisa dihitung walau penyimpanan gagal.
+      }
     } finally {
       setLoading(false);
     }
@@ -104,6 +149,30 @@ export function HistoryPage() {
         <p className="muted" style={{ lineHeight: 1.7 }}>
           Riwayat yang tersusun membantu Anda melihat kebiasaan makan dengan lebih jelas dan membuat keputusan berikutnya lebih mudah.
         </p>
+      </div>
+
+      <div className="card" style={{ marginTop: 20 }}>
+        <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+          <h4 className="card-title">Riwayat tersimpan di Azure SQL</h4>
+          <span className="chip">{historyLoading ? 'Memuat...' : `${savedHistory.length} data`}</span>
+        </div>
+        {savedHistory.length > 0 ? (
+          <div className="list" style={{ marginTop: 12 }}>
+            {savedHistory.map((entry) => (
+              <div className="list-item" key={entry.id}>
+                <div>
+                  <strong>{entry.meal_label ?? 'Menu tersimpan'}</strong>
+                  <div className="muted">{new Date(entry.created_at).toLocaleString('id-ID')}</div>
+                </div>
+                <span>{entry.food_items.length} item</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state" style={{ marginTop: 12 }}>
+            {historyLoading ? 'Memuat riwayat dari server...' : 'Belum ada riwayat yang tersimpan ke Azure SQL.'}
+          </div>
+        )}
       </div>
     </section>
   );

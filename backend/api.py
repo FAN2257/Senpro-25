@@ -1,11 +1,16 @@
 import os
 import json
 import io
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from typing import Any, Optional
+
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from ultralytics import YOLO
 from PIL import Image
 import uvicorn
+
+from db import initialize_database, is_database_ready, list_meal_history, save_meal_history
 
 BASE_DIR = os.path.dirname(__file__)
 
@@ -38,6 +43,20 @@ model = None
 nutrition_data = {}
 
 
+class MealHistoryItem(BaseModel):
+    food_name: str
+    quantity_gram: float = 100.0
+
+
+class MealHistoryEntry(BaseModel):
+    meal_label: Optional[str] = None
+    user_email: Optional[str] = None
+    food_items: list[MealHistoryItem]
+    total_nutrition: dict[str, float]
+    details: list[dict[str, Any]] = []
+    source: str = "manual"
+
+
 @app.on_event("startup")
 def load_assets():
     global model, nutrition_data
@@ -55,6 +74,11 @@ def load_assets():
             print(f"[INFO] Nutrition data loaded ({len(nutrition_data)} items)")
     except Exception as e:
         print(f"[WARNING] Gagal memuat data JSON: {e}")
+
+    if initialize_database():
+        print("[INFO] Azure SQL connection ready")
+    else:
+        print("[INFO] Azure SQL not configured; running without persistent history")
 
 
 @app.get("/")
@@ -197,6 +221,32 @@ def calculate_meal(meal: MealRequest):
         "status": "success",
         "total_nutrition": total_nutrition,
         "details": details
+    }
+
+
+@app.post("/history/meals")
+def create_meal_history(entry: MealHistoryEntry):
+    saved = save_meal_history(entry.model_dump())
+    if not saved:
+        raise HTTPException(status_code=503, detail="Riwayat belum bisa disimpan ke Azure SQL.")
+
+    return {
+        "status": "success",
+        "message": "Riwayat makan tersimpan.",
+        "record": saved
+    }
+
+
+@app.get("/history/meals")
+def get_meal_history(limit: int = Query(default=10, ge=1, le=100)):
+    if not is_database_ready():
+        raise HTTPException(status_code=503, detail="Azure SQL belum dikonfigurasi.")
+
+    records = list_meal_history(limit=limit)
+    return {
+        "status": "success",
+        "total_items": len(records),
+        "items": records
     }
 
 

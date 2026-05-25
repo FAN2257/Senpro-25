@@ -34,3 +34,8 @@ uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 Catatan:
 - File model (`best.pt`) dan data nutrisi (`nutrition_mapping.json`) harus berada di folder ini. Jika Anda melakukan training ulang, letakkan model hasil training dengan nama `best.pt` di folder `backend/`.
 - Untuk deployment, ganti `allow_origins` pada CORS middleware menjadi domain frontend production.
+
+Azure SQL:
+- Backend akan mencoba membaca `AZURE_SQL_CONNECTION_STRING` terlebih dahulu.
+- Jika tidak ada, backend juga menerima `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_SQL_USERNAME`, dan `AZURE_SQL_PASSWORD`.
+- Riwayat meal disimpan ke tabel `dbo.meal_history` dan bisa dibaca lewat endpoint `GET /history/meals`.
