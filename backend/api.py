@@ -1,10 +1,13 @@
 import os
 import json
 import io
+from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from ultralytics import YOLO
 from PIL import Image
@@ -13,6 +16,8 @@ import uvicorn
 from db import initialize_database, is_database_ready, list_meal_history, save_meal_history
 
 BASE_DIR = os.path.dirname(__file__)
+BASE_PATH = Path(__file__).resolve().parent
+API_PREFIX = "/api"
 
 app = FastAPI(title="Senpro Food & Nutrition API", description="API untuk mendeteksi makanan Indonesia dan mengeluarkan informasi gizi.")
 
@@ -83,10 +88,32 @@ def load_assets():
 
 @app.get("/")
 def read_root():
+    return _serve_spa_or_status()
+
+
+def _get_spa_dir() -> Path | None:
+    candidates = [
+        BASE_PATH / "static",
+        BASE_PATH / "frontend_dist",
+        BASE_PATH.parent / "frontend" / "dist",
+    ]
+
+    for candidate in candidates:
+        if (candidate / "index.html").exists():
+            return candidate
+
+    return None
+
+
+def _serve_spa_or_status():
+    spa_dir = _get_spa_dir()
+    if spa_dir is not None:
+        return FileResponse(spa_dir / "index.html")
+
     return {"status": "success", "message": "Senpro Food API Berjalan Normal"}
 
 
-@app.post("/predict")
+@app.post(f"{API_PREFIX}/predict")
 async def predict_food(file: UploadFile = File(...)):
     if model is None:
         raise HTTPException(status_code=500, detail="Model YOLO belum tersedia/tidak terbaca. Pastikan proses training sudah selesai.")
@@ -151,7 +178,7 @@ class MealRequest(BaseModel):
     foods: List[FoodItem]
 
 
-@app.get("/foods")
+@app.get(f"{API_PREFIX}/foods")
 def get_all_foods():
     """Mengembalikan daftar semua makanan nusantara yang disupport oleh model beserta data gizinya."""
     if not nutrition_data:
@@ -163,7 +190,7 @@ def get_all_foods():
     }
 
 
-@app.get("/foods/{food_name}")
+@app.get(f"{API_PREFIX}/foods/{{food_name}}")
 def get_food_nutrition(food_name: str):
     """Mengembalikan informasi gizi untuk satu spesifik makanan."""
     gizi = nutrition_data.get(food_name)
@@ -177,7 +204,7 @@ def get_food_nutrition(food_name: str):
     }
 
 
-@app.post("/calculate")
+@app.post(f"{API_PREFIX}/calculate")
 def calculate_meal(meal: MealRequest):
     """
     Menghitung total gizi dari beberapa makanan sekaligus.
@@ -224,7 +251,7 @@ def calculate_meal(meal: MealRequest):
     }
 
 
-@app.post("/history/meals")
+@app.post(f"{API_PREFIX}/history/meals")
 def create_meal_history(entry: MealHistoryEntry):
     saved = save_meal_history(entry.model_dump())
     if not saved:
@@ -237,7 +264,7 @@ def create_meal_history(entry: MealHistoryEntry):
     }
 
 
-@app.get("/history/meals")
+@app.get(f"{API_PREFIX}/history/meals")
 def get_meal_history(limit: int = Query(default=10, ge=1, le=100)):
     if not is_database_ready():
         raise HTTPException(status_code=503, detail="Azure SQL belum dikonfigurasi.")
@@ -248,6 +275,19 @@ def get_meal_history(limit: int = Query(default=10, ge=1, le=100)):
         "total_items": len(records),
         "items": records
     }
+
+
+spa_dir = _get_spa_dir()
+if spa_dir is not None:
+    app.mount("/assets", StaticFiles(directory=spa_dir / "assets"), name="assets")
+
+
+@app.get("/{full_path:path}")
+def spa_fallback(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return _serve_spa_or_status()
 
 
 if __name__ == "__main__":
