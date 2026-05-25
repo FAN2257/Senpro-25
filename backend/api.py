@@ -9,7 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from ultralytics import YOLO
+# Import ultralytics lazily inside startup to avoid import-time native dependency
+# errors on App Service (e.g. missing libxcb). We'll attempt to import when
+# initializing the model and continue without persistence/AI if unavailable.
 from PIL import Image
 import uvicorn
 
@@ -67,10 +69,15 @@ def load_assets():
     global model, nutrition_data
     # Load Model YOLO
     try:
+        try:
+            from ultralytics import YOLO
+        except Exception as ie:
+            raise RuntimeError(f"ultralytics import failed: {ie}")
+
         model = YOLO(MODEL_PATH)
         print(f"[INFO] Model loaded from {MODEL_PATH}")
     except Exception as e:
-        print(f"[WARNING] Model tidak ditemukan di {MODEL_PATH}. Pastikan Anda sudah menjalankan training. Error: {e}")
+        print(f"[WARNING] Model tidak dapat dimuat. AI inference akan dinonaktifkan. Error: {e}")
 
     # Load Dataset JSON
     try:
