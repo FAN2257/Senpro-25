@@ -8,6 +8,19 @@ const supabaseAnonKey =
 
 export const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey);
 
+export function getAppOrigin() {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+
+  return import.meta.env.VITE_APP_URL ?? '';
+}
+
+export function getAuthRedirectUrl(pathname = '/auth') {
+  const origin = getAppOrigin();
+  return origin ? new URL(pathname, origin).toString() : pathname;
+}
+
 export const supabase = hasSupabaseConfig
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;

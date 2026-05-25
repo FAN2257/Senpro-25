@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { CheckCircle2, LockKeyhole, UserRound } from 'lucide-react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import { hasSupabaseConfig, supabase } from '../lib/supabase';
+import { getAuthRedirectUrl, hasSupabaseConfig, supabase } from '../lib/supabase';
 
 type AuthMode = 'login' | 'register';
 
@@ -19,6 +19,7 @@ export function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const isSignedIn = sessionReady && Boolean(sessionEmail);
 
   useEffect(() => {
     let isMounted = true;
@@ -109,6 +110,7 @@ export function AuthPage() {
       email,
       password,
       options: {
+        emailRedirectTo: getAuthRedirectUrl('/auth'),
         data: {
           full_name: fullName
         }
@@ -151,6 +153,10 @@ export function AuthPage() {
 
     toast.success('Berhasil keluar.');
     setSessionEmail(null);
+  };
+
+  const goToDashboard = () => {
+    navigate('/');
   };
 
   return (
@@ -201,82 +207,96 @@ export function AuthPage() {
             </div>
           ) : null}
 
-          {sessionReady && sessionEmail ? (
-            <div className="empty-state" style={{ marginBottom: 20 }}>
-              Anda masuk sebagai {sessionEmail}
-              <div style={{ marginTop: 12 }}>
+          {isSignedIn ? (
+            <div className="stack">
+              <div className="empty-state" style={{ marginBottom: 0 }}>
+                <div className="stack">
+                  <span className="chip">Sudah masuk</span>
+                  <strong>{sessionEmail}</strong>
+                  <p className="muted" style={{ margin: 0, lineHeight: 1.7 }}>
+                    Akun siap dipakai untuk menyimpan riwayat scan dan data makanan.
+                  </p>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button className="btn btn-primary" type="button" onClick={goToDashboard} disabled={loading}>
+                  Lanjut ke beranda
+                </button>
                 <button className="btn btn-secondary" type="button" onClick={handleSignOut} disabled={loading}>
                   Keluar
                 </button>
               </div>
             </div>
-          ) : null}
-
-          <div className="auth-switch" role="tablist" aria-label="Pilih mode akun">
-            <button
-              className={`auth-switch-btn ${mode === 'login' ? 'active' : ''}`}
-              type="button"
-              onClick={() => setMode('login')}
-            >
-              <LockKeyhole size={16} /> Masuk
-            </button>
-            <button
-              className={`auth-switch-btn ${mode === 'register' ? 'active' : ''}`}
-              type="button"
-              onClick={() => setMode('register')}
-            >
-              <UserRound size={16} /> Daftar
-            </button>
-          </div>
-
-          {mode === 'login' ? (
-            <form onSubmit={handleLogin}>
-              <h4 className="form-title" style={{ marginTop: 18 }}>Masuk ke akun Anda</h4>
-              <div className="stack" style={{ marginTop: 18 }}>
-                <div className="field">
-                  <label className="field-label" htmlFor="login-email">Email</label>
-                  <input id="login-email" name="email" className="input" type="email" placeholder="nama@contoh.com" required />
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="login-password">Password</label>
-                  <input id="login-password" name="password" className="input" type="password" placeholder="••••••••" required minLength={6} />
-                </div>
-              </div>
-              <div className="form-actions" style={{ marginTop: 18 }}>
-                <button className="btn btn-primary" type="submit" disabled={loading}>
-                  {loading ? 'Memproses...' : 'Masuk'}
-                </button>
-                <button className="btn btn-secondary" type="button" onClick={() => setMode('register')} disabled={loading}>
-                  Buat akun
-                </button>
-              </div>
-            </form>
           ) : (
-            <form onSubmit={handleRegister}>
-              <h4 className="form-title" style={{ marginTop: 18 }}>Buat akun baru</h4>
-              <div className="stack" style={{ marginTop: 18 }}>
-                <div className="field">
-                  <label className="field-label" htmlFor="register-name">Nama lengkap</label>
-                  <input id="register-name" name="name" className="input" type="text" placeholder="Nama Anda" required />
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="register-email">Email</label>
-                  <input id="register-email" name="email" className="input" type="email" placeholder="nama@contoh.com" required />
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="register-password">Password</label>
-                  <input id="register-password" name="password" className="input" type="password" placeholder="Minimal 8 karakter" required minLength={6} />
-                </div>
-              </div>
-              <div className="form-actions" style={{ marginTop: 18 }}>
-                <button className="btn btn-primary" type="submit" disabled={loading}>
-                  {loading ? 'Memproses...' : 'Daftar'}
+            <>
+              <div className="auth-switch" role="tablist" aria-label="Pilih mode akun">
+                <button
+                  className={`auth-switch-btn ${mode === 'login' ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => setMode('login')}
+                >
+                  <LockKeyhole size={16} /> Masuk
                 </button>
-                <button className="btn btn-secondary" type="button" onClick={() => setMode('login')} disabled={loading}>
-                  Sudah punya akun
+                <button
+                  className={`auth-switch-btn ${mode === 'register' ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => setMode('register')}
+                >
+                  <UserRound size={16} /> Daftar
                 </button>
               </div>
-            </form>
+
+              {mode === 'login' ? (
+                <form onSubmit={handleLogin}>
+                  <h4 className="form-title" style={{ marginTop: 18 }}>Masuk ke akun Anda</h4>
+                  <div className="stack" style={{ marginTop: 18 }}>
+                    <div className="field">
+                      <label className="field-label" htmlFor="login-email">Email</label>
+                      <input id="login-email" name="email" className="input" type="email" placeholder="nama@contoh.com" required />
+                    </div>
+                    <div className="field">
+                      <label className="field-label" htmlFor="login-password">Password</label>
+                      <input id="login-password" name="password" className="input" type="password" placeholder="••••••••" required minLength={6} />
+                    </div>
+                  </div>
+                  <div className="form-actions" style={{ marginTop: 18 }}>
+                    <button className="btn btn-primary" type="submit" disabled={loading}>
+                      {loading ? 'Memproses...' : 'Masuk'}
+                    </button>
+                    <button className="btn btn-secondary" type="button" onClick={() => setMode('register')} disabled={loading}>
+                      Buat akun
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleRegister}>
+                  <h4 className="form-title" style={{ marginTop: 18 }}>Buat akun baru</h4>
+                  <div className="stack" style={{ marginTop: 18 }}>
+                    <div className="field">
+                      <label className="field-label" htmlFor="register-name">Nama lengkap</label>
+                      <input id="register-name" name="name" className="input" type="text" placeholder="Nama Anda" required />
+                    </div>
+                    <div className="field">
+                      <label className="field-label" htmlFor="register-email">Email</label>
+                      <input id="register-email" name="email" className="input" type="email" placeholder="nama@contoh.com" required />
+                    </div>
+                    <div className="field">
+                      <label className="field-label" htmlFor="register-password">Password</label>
+                      <input id="register-password" name="password" className="input" type="password" placeholder="Minimal 8 karakter" required minLength={6} />
+                    </div>
+                  </div>
+                  <div className="form-actions" style={{ marginTop: 18 }}>
+                    <button className="btn btn-primary" type="submit" disabled={loading}>
+                      {loading ? 'Memproses...' : 'Daftar'}
+                    </button>
+                    <button className="btn btn-secondary" type="button" onClick={() => setMode('login')} disabled={loading}>
+                      Sudah punya akun
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
           )}
 
           <div className="footer-note">

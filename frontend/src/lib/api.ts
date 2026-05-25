@@ -9,6 +9,7 @@ import {
   SaveMealHistoryPayload,
   SaveMealHistoryResponse
 } from '../types/api';
+import { supabase } from './supabase';
 
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 
@@ -87,4 +88,18 @@ export function getModelStatus() {
 
 export function getApiBaseUrl() {
   return API_BASE_URL;
+}
+
+export async function getCurrentUserEmail() {
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    return null;
+  }
+
+  return data.user?.email ?? null;
 }

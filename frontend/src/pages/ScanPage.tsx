@@ -1,17 +1,54 @@
 ﻿import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { CameraOff, Clock3, ImagePlus, ScanSearch, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getModelStatus, predictFood } from '../lib/api';
+import { getCurrentUserEmail, getModelStatus, predictFood, saveMealHistory } from '../lib/api';
 import type { DetectionItem } from '../types/api';
 import { useScanStore } from '../store/scanStore';
 import { MotionSection } from '../components/MotionSection';
 
 const isMobileDevice = () => { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); };
 
+const NUTRITION_KEYS = ['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'P', 'Fe', 'Water'] as const;
+
+function buildScanSummary(detections: DetectionItem[]) {
+  const totalNutrition = NUTRITION_KEYS.reduce((accumulator, key) => ({ ...accumulator, [key]: 0 }), {} as Record<(typeof NUTRITION_KEYS)[number], number>);
+
+  const foodItems = detections.map((item) => ({
+    food_name: item.food_name,
+    quantity_gram: 100
+  }));
+
+  for (const detection of detections) {
+    const nutrition = typeof detection.nutrition_info === 'string' ? null : detection.nutrition_info;
+
+    if (!nutrition) {
+      continue;
+    }
+
+    for (const key of NUTRITION_KEYS) {
+      totalNutrition[key] += Number(nutrition[key] ?? 0);
+    }
+  }
+
+  return {
+    foodItems,
+    totalNutrition,
+    dominantFood: detections[0] ?? null,
+    topConfidenceFood: detections.reduce<DetectionItem | null>((best, current) => {
+      if (!best || current.confidence > best.confidence) {
+        return current;
+      }
+
+      return best;
+    }, null)
+  };
+}
+
 export function ScanPage() {
   const [isMobile] = useState(isMobileDevice());
   const [modelReady, setModelReady] = useState(false);
   const [modelStatusText, setModelStatusText] = useState('Memeriksa kesiapan model...');
+  const [scanInsights, setScanInsights] = useState<ReturnType<typeof buildScanSummary> | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const {
@@ -30,6 +67,15 @@ export function ScanPage() {
   } = useScanStore();
 
   const totalDetections = useMemo(() => result?.detections.length ?? 0, [result]);
+
+  useEffect(() => {
+    if (!result?.detections.length) {
+      setScanInsights(null);
+      return;
+    }
+
+    setScanInsights(buildScanSummary(result.detections));
+  }, [result]);
 
   useEffect(() => {
     let mounted = true;
@@ -105,6 +151,23 @@ export function ScanPage() {
       const response = await predictFood(file);
       setResult(response);
       pushHistory(file.name, response);
+
+      try {
+        const userEmail = await getCurrentUserEmail();
+        const summary = buildScanSummary(response.detections);
+
+        await saveMealHistory({
+          meal_label: `Scan ${new Date().toLocaleString('id-ID')}`,
+          user_email: userEmail,
+          food_items: summary.foodItems,
+          total_nutrition: summary.totalNutrition,
+          details: response.detections,
+          source: 'scan'
+        });
+      } catch {
+        // Scan tetap tampil walau penyimpanan riwayat server gagal.
+      }
+
       if (response.detections.length > 0) {
         toast.success(`${response.detections.length} makanan ditemukan.`);
       } else {
@@ -239,6 +302,33 @@ export function ScanPage() {
             <h4 className="metric-value">{totalDetections}</h4>
             <p className="metric-note">Jumlah makanan yang berhasil dikenali dari foto Anda.</p>
           </div>
+          {scanInsights ? (
+            <div className="card">
+              <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+                <h4 className="card-title">Analitik cepat</h4>
+                <span className="chip">Snapshot scan ini</span>
+              </div>
+              <div className="grid-2" style={{ marginTop: 12 }}>
+                <div className="list">
+                  <div className="list-item"><strong>Kalori total</strong><span>{scanInsights.totalNutrition.Energy ?? 0}</span></div>
+                  <div className="list-item"><strong>Protein</strong><span>{scanInsights.totalNutrition.Protein ?? 0}</span></div>
+                  <div className="list-item"><strong>Lemak</strong><span>{scanInsights.totalNutrition.Fat ?? 0}</span></div>
+                  <div className="list-item"><strong>Karbohidrat</strong><span>{scanInsights.totalNutrition.CHO ?? 0}</span></div>
+                </div>
+                <div className="stack">
+                  <div className="empty-state" style={{ marginBottom: 0 }}>
+                    <strong>Food summary</strong>
+                    <div className="muted" style={{ marginTop: 8 }}>
+                      {scanInsights.topConfidenceFood ? `Item paling yakin: ${scanInsights.topConfidenceFood.food_name}` : 'Belum ada item terdeteksi.'}
+                    </div>
+                    <div className="muted" style={{ marginTop: 8 }}>
+                      {scanInsights.dominantFood ? `Item pertama: ${scanInsights.dominantFood.food_name}` : 'Tidak ada data analitik.'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="card">
             <div className="toolbar" style={{ justifyContent: 'space-between' }}>
               <h4 className="card-title">Riwayat terakhir</h4>
