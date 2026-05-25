@@ -13,6 +13,9 @@ const NUTRITION_KEYS = ['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'P', 'Fe', 'Wat
 
 const DEFAULT_PORTION_GRAM = 100;
 
+const MACRO_KEYS = ['Energy', 'Protein', 'Fat', 'CHO'] as const;
+const MICRO_KEYS = ['Ca', 'P', 'Fe', 'Water'] as const;
+
 function scaleNutrition(
   nutrition: Record<(typeof NUTRITION_KEYS)[number], number>,
   portionGram: number,
@@ -239,15 +242,21 @@ export function ScanPage() {
             <div className="field">
               <span className="field-label">Status gizi</span>
               <p className="field-help">
-                {nutrition ? 'Ringkasan gizi tersedia.' : 'Ringkasan gizi belum tersedia untuk item ini.'}
+                {nutrition ? 'Quick analytic tersedia untuk item ini.' : 'Ringkasan gizi belum tersedia untuk item ini.'}
               </p>
             </div>
           </div>
-              {nutrition ? (
+          {nutrition ? (
             <div className="list">
-              {['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'Fe'].map((key) => (
+              {MACRO_KEYS.map((key) => (
                 <div className="list-item" key={key}>
-                  <strong>{key}</strong>
+                  <strong>{key === 'Energy' ? 'Kalori' : key === 'CHO' ? 'Karbohidrat' : key === 'Protein' ? 'Protein' : 'Lemak'}</strong>
+                  <span>{formatNutrition(key, displayedNutrition ? displayedNutrition[key as keyof typeof displayedNutrition] : 0)}</span>
+                </div>
+              ))}
+              {MICRO_KEYS.map((key) => (
+                <div className="list-item" key={key}>
+                  <strong>{key === 'Ca' ? 'Kalsium' : key === 'P' ? 'Fosfor' : key === 'Fe' ? 'Zat Besi' : 'Air'}</strong>
                   <span>{formatNutrition(key, displayedNutrition ? displayedNutrition[key as keyof typeof displayedNutrition] : 0)}</span>
                 </div>
               ))}
@@ -342,8 +351,11 @@ export function ScanPage() {
           {scanInsights ? (
             <div className="card">
               <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-                <h4 className="card-title">Analitik cepat</h4>
-                <span className="chip">Snapshot scan ini</span>
+                <div>
+                  <h4 className="card-title">Quick analytic nutrisi</h4>
+                  <p className="muted" style={{ marginTop: 4 }}>Ringkasan makro dan mikro untuk porsi yang Anda pilih.</p>
+                </div>
+                <span className="chip">Basis {portionGram} g</span>
               </div>
               <div className="field" style={{ marginTop: 12 }}>
                 <label className="field-label" htmlFor="portion-gram">Basis porsi tampilan</label>
@@ -358,18 +370,30 @@ export function ScanPage() {
                 <p className="field-help">Nilai di bawah akan disesuaikan dari basis 100 g ke porsi yang Anda pilih.</p>
               </div>
               <div className="grid-2" style={{ marginTop: 12 }}>
-                <div className="list">
-                  <div className="list-item"><strong>Kalori total</strong><span>{formatNutrition('Energy', displayNutrition?.Energy ?? 0)}</span></div>
-                  <div className="list-item"><strong>Protein</strong><span>{formatNutrition('Protein', displayNutrition?.Protein ?? 0)}</span></div>
-                  <div className="list-item"><strong>Lemak</strong><span>{formatNutrition('Fat', displayNutrition?.Fat ?? 0)}</span></div>
-                  <div className="list-item"><strong>Karbohidrat</strong><span>{formatNutrition('CHO', displayNutrition?.CHO ?? 0)}</span></div>
+                <div className="card" style={{ background: 'rgba(15, 118, 110, 0.05)', border: '1px solid rgba(15, 118, 110, 0.15)' }}>
+                  <div className="grid-2" style={{ gap: 12 }}>
+                    <div className="empty-state" style={{ marginBottom: 0 }}>
+                      <strong>Kalori total</strong>
+                      <div className="metric-value" style={{ marginTop: 8 }}>{formatNutrition('Energy', displayNutrition?.Energy ?? 0)}</div>
+                      <div className="muted" style={{ marginTop: 6 }}>Berdasarkan porsi {portionGram} g.</div>
+                    </div>
+                    <div className="empty-state" style={{ marginBottom: 0 }}>
+                      <strong>Makro utama</strong>
+                      <div className="muted" style={{ marginTop: 8 }}>Protein: {formatNutrition('Protein', displayNutrition?.Protein ?? 0)}</div>
+                      <div className="muted" style={{ marginTop: 6 }}>Lemak: {formatNutrition('Fat', displayNutrition?.Fat ?? 0)}</div>
+                      <div className="muted" style={{ marginTop: 6 }}>Karbohidrat: {formatNutrition('CHO', displayNutrition?.CHO ?? 0)}</div>
+                    </div>
+                  </div>
                 </div>
-                  <p className="footer-note" style={{ marginTop: 8 }}>
-                    Nilai ditampilkan berdasarkan basis porsi di atas. {scanInsights.dominantFood && dominantFoodDisplay ? (
-                      `Contoh: dalam ${portionGram} g ${scanInsights.dominantFood.food_name} mengandung ${formatNutrition('Energy', dominantFoodDisplay.Energy)}, ${formatNutrition('Protein', dominantFoodDisplay.Protein)}, ${formatNutrition('Fat', dominantFoodDisplay.Fat)} dan ${formatNutrition('CHO', dominantFoodDisplay.CHO)}.`
-                    ) : 'Contoh per-porsi tersedia jika data nutrisi untuk item terdeteksi.'}
-                  </p>
                 <div className="stack">
+                  <div className="empty-state" style={{ marginBottom: 0 }}>
+                    <strong>Contoh quick analytic</strong>
+                    <div className="muted" style={{ marginTop: 8 }}>
+                      {scanInsights.dominantFood && dominantFoodDisplay ? (
+                        `Dalam ${portionGram} g ${scanInsights.dominantFood.food_name}, terdapat ${formatNutrition('Energy', dominantFoodDisplay.Energy)}, ${formatNutrition('Protein', dominantFoodDisplay.Protein)}, ${formatNutrition('Fat', dominantFoodDisplay.Fat)} dan ${formatNutrition('CHO', dominantFoodDisplay.CHO)}.`
+                      ) : 'Contoh per-porsi akan muncul setelah item dengan nutrisi berhasil terdeteksi.'}
+                    </div>
+                  </div>
                   <div className="empty-state" style={{ marginBottom: 0 }}>
                     <strong>Food summary</strong>
                     <div className="muted" style={{ marginTop: 8 }}>
@@ -381,8 +405,16 @@ export function ScanPage() {
                   </div>
                 </div>
               </div>
+              <p className="footer-note" style={{ marginTop: 8 }}>
+                Quick analytic ini menampilkan makro dan mikro pada basis {portionGram} g, sementara detail item tetap mengacu ke referensi 100 g.
+              </p>
             </div>
           ) : null}
+          {result?.detections?.length ? result.detections.map(renderDetection) : (
+            <div className="empty-state">
+              Hasil scan akan tampil di sini setelah gambar diproses.
+            </div>
+          )}
           <div className="card">
             <div className="toolbar" style={{ justifyContent: 'space-between' }}>
               <h4 className="card-title">Riwayat terakhir</h4>
@@ -401,11 +433,6 @@ export function ScanPage() {
               <div className="empty-state" style={{ marginTop: 12 }}>Belum ada riwayat scan yang tersimpan.</div>
             )}
           </div>
-          {result?.detections?.length ? result.detections.map(renderDetection) : (
-            <div className="empty-state">
-              Hasil scan akan tampil di sini setelah gambar diproses.
-            </div>
-          )}
         </div>
       </div>
     </MotionSection>

@@ -5,6 +5,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getFoodDetail } from '../lib/api';
 import { formatNutrition } from '../lib/nutrition';
 
+const QUICK_ANALYTIC_KEYS = ['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'P', 'Fe', 'Water'] as const;
+
 export function FoodDetailPage() {
   const { foodName = '' } = useParams();
   const navigate = useNavigate();
@@ -42,12 +44,12 @@ export function FoodDetailPage() {
               <Flame size={14} /> Ringkasan tersedia
             </span>
             <span className="status status-warning">
-              <Filter size={14} /> Referensi 100 g
+              <Filter size={14} /> Quick analytic 100 g
             </span>
           </div>
 
           <div className="footer-note">
-            Gunakan halaman ini untuk membandingkan makanan satu dengan yang lain.
+            Gunakan halaman ini untuk membandingkan makanan satu dengan yang lain dan melihat makro nutrisi per 100 g dengan cepat.
           </div>
         </div>
 
@@ -57,7 +59,7 @@ export function FoodDetailPage() {
           {data?.nutrition_info ? (
             <div className="list">
               {Object.entries(data.nutrition_info)
-                .filter(([key, value]) => typeof value === 'number' && ['Energy', 'Protein', 'Fat', 'CHO', 'Ca', 'P', 'Fe', 'Water'].includes(key))
+                .filter(([key, value]) => typeof value === 'number' && QUICK_ANALYTIC_KEYS.includes(key as (typeof QUICK_ANALYTIC_KEYS)[number]))
                 .map(([key, value]) => (
                   <div className="list-item" key={key}>
                     <strong>{key}</strong>
@@ -67,7 +69,7 @@ export function FoodDetailPage() {
             </div>
           ) : null}
           {data?.nutrition_info ? (
-            <p className="footer-note">Data ini ditampilkan per 100 gram dan bisa dipakai untuk memperkirakan porsi.</p>
+            <p className="footer-note">Data ini ditampilkan per 100 gram dan bisa dipakai sebagai quick analytic untuk memperkirakan porsi.</p>
           ) : null}
         </div>
       </div>

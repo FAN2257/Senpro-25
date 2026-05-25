@@ -50,7 +50,7 @@ export function FoodsPage() {
             <span className="chip">Tersedia</span>
             <h4 className="card-title" style={{ marginTop: 12 }}>{food}</h4>
             <p className="muted" style={{ lineHeight: 1.7 }}>
-              Buka detail untuk melihat ringkasan gizi makanan ini.
+              Buka detail untuk melihat quick analytic per 100 g, termasuk makro dan mikro yang paling relevan.
             </p>
             <Link className="btn btn-secondary" to={`/foods/${encodeURIComponent(food)}`}>
               Lihat detail

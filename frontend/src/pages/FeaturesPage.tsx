@@ -12,7 +12,7 @@ const features = [
   {
     icon: Activity,
     title: 'Ringkasan Nutrisi Lengkap',
-    description: 'Lihat detail kalori, protein, lemak, karbohidrat, dan mineral penting. Informasi tersaji sederhana sehingga mudah dipahami tanpa perlu ahli gizi.'
+    description: 'Lihat quick analytic nutrisi per 100 g atau per porsi, lengkap dengan kalori, protein, lemak, karbohidrat, dan mineral penting. Informasi tersaji sederhana sehingga mudah dipahami tanpa perlu ahli gizi.'
   },
   {
     icon: History,
