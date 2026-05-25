@@ -120,6 +120,38 @@ def _serve_spa_or_status():
     return {"status": "success", "message": "Senpro Food API Berjalan Normal"}
 
 
+def _serve_root_static(filename: str):
+    spa_dir = _get_spa_dir()
+    if spa_dir is None:
+        raise HTTPException(status_code=404, detail="Static assets not found")
+
+    file_path = spa_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"File '{filename}' not found")
+
+    return FileResponse(file_path)
+
+
+@app.get("/LogoSnapEats.png")
+def logo_asset():
+    return _serve_root_static("LogoSnapEats.png")
+
+
+@app.get("/favicon.svg")
+def favicon_asset():
+    return _serve_root_static("favicon.svg")
+
+
+@app.get("/manifest.webmanifest")
+def manifest_asset():
+    return _serve_root_static("manifest.webmanifest")
+
+
+@app.get("/sw.js")
+def service_worker_asset():
+    return _serve_root_static("sw.js")
+
+
 @app.post(f"{API_PREFIX}/predict")
 async def predict_food(file: UploadFile = File(...)):
     if model is None:
