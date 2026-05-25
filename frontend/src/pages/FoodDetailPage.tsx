@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Flame, Filter } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getFoodDetail } from '../lib/api';
+import { formatNutrition } from '../lib/nutrition';
 
 export function FoodDetailPage() {
   const { foodName = '' } = useParams();
@@ -60,7 +61,7 @@ export function FoodDetailPage() {
                 .map(([key, value]) => (
                   <div className="list-item" key={key}>
                     <strong>{key}</strong>
-                    <span>{String(value)}</span>
+                    <span>{formatNutrition(key, value as number)}</span>
                   </div>
                 ))}
             </div>

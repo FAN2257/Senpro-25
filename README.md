@@ -94,9 +94,7 @@ Backend akan membuat tabel `dbo.meal_history` otomatis saat koneksi Azure SQL be
 
 ### Deploy ke Azure App Service
 
-Untuk YOLO/OpenCV di App Service Linux, gunakan **custom container**. Repo ini sudah punya `Dockerfile` di root, dan workflow GitHub Actions sekarang membangun image container lalu mengirimkannya ke Azure App Service for Containers.
-
-Panduan ini tetap menjelaskan deployment dengan 2 App Service secara konsep, tetapi untuk scan YOLO yang stabil, jalur yang direkomendasikan adalah container.
+Panduan ini memakai 2 App Service: satu untuk backend FastAPI dan satu untuk frontend Vite.
 
 #### 1) Siapkan Azure SQL Database
 
@@ -129,7 +127,8 @@ Panduan ini tetap menjelaskan deployment dengan 2 App Service secara konsep, tet
 	- **Subscription**: subscription Anda.
 	- **Resource group**: resource group yang sama.
 	- **Name**: misalnya `snapeats-backend`.
-	- **Publish**: `Docker Container`.
+	- **Publish**: `Code`.
+	- **Runtime stack**: `Python 3.11` atau versi Python yang tersedia.
 	- **Operating System**: `Linux`.
 	- **Region**: pilih region yang dekat dengan SQL Database.
 5. Klik **Review + create** lalu **Create**.
@@ -141,18 +140,19 @@ Panduan ini tetap menjelaskan deployment dengan 2 App Service secara konsep, tet
 	- **Opsi 2**: `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_SQL_USERNAME`, `AZURE_SQL_PASSWORD`, `AZURE_SQL_DRIVER`
 10. Tambahkan juga `PORT` dengan nilai `8000`.
 11. Klik **Save**.
-12. Jika memakai container pribadi dari ACR, buka **Configuration** > **Application settings** lalu tambahkan kredensial registry:
+12. Buka **Configuration** > **General settings**.
+13. Pada bagian **Startup Command**, isi:
 
-```env
-DOCKER_REGISTRY_SERVER_URL=https://<registry>.azurecr.io
-DOCKER_REGISTRY_SERVER_USERNAME=<registry-username>
-DOCKER_REGISTRY_SERVER_PASSWORD=<registry-password>
+```bash
+python -m uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
-13. Klik **Save**.
-14. Setelah itu, deploy melalui GitHub Actions container workflow yang membangun image dari `Dockerfile`.
-15. Setelah deploy selesai, buka **Log stream** atau halaman **Overview** untuk melihat URL backend.
-16. Coba buka `https://<nama-backend>.azurewebsites.net/` dan pastikan endpoint root merespons.
+14. Klik **Save**.
+15. Buka **Deployment Center**.
+16. Pilih cara deploy yang Anda pakai, misalnya GitHub Actions, Local Git, atau upload package.
+17. Deploy folder `backend/` ke App Service ini.
+18. Setelah deploy selesai, buka **Log stream** atau halaman **Overview** untuk melihat URL backend.
+19. Coba buka `https://<nama-backend>.azurewebsites.net/` dan pastikan endpoint root merespons.
 
 #### 3) Buat App Service untuk frontend
 
@@ -181,7 +181,7 @@ https://snapeats-backend.azurewebsites.net
 npm run build
 ```
 
-11. Deploy isi folder `frontend/dist` ke App Service frontend, atau sajikan frontend dari backend container jika Anda memilih single app service.
+11. Deploy isi folder `frontend/dist` ke App Service frontend.
 12. Setelah deploy selesai, buka URL frontend dan pastikan halaman utama muncul.
 13. Coba halaman **Scan** dan **Riwayat** untuk memastikan frontend terhubung ke backend Azure.
 
@@ -202,50 +202,6 @@ npm run build
 4. Jika deploy frontend gagal karena routing SPA, pastikan App Service atau static server mengarahkan request non-file ke `index.html`.
 
 Jika Anda ingin satu App Service saja, backend FastAPI juga bisa menyajikan hasil build frontend. Untuk repo ini, dua App Service tetap lebih mudah dipisah dan dioperasikan.
-
-### Workflow GitHub Actions container
-
-Workflow di [.github/workflows/deploy.yml](.github/workflows/deploy.yml) sekarang:
-
-1. login ke registry container
-2. build image dari `Dockerfile`
-3. push image ke registry
-4. update App Service container ke image itu
-
-Anda perlu menyiapkan secrets berikut di GitHub:
-
-```env
-ACR_LOGIN_SERVER=<registry>.azurecr.io
-ACR_USERNAME=<registry-username>
-ACR_PASSWORD=<registry-password>
-AZURE_WEBAPP_PUBLISH_PROFILE=<publish-profile-app-service>
-```
-
-Catatan: Anda **tidak perlu** menjalankan Docker Desktop di laptop untuk deploy ini. Build image dilakukan di GitHub Actions runner, lalu image-nya di-push ke registry dan dijalankan di Azure. Docker Desktop hanya opsional kalau Anda ingin tes container secara lokal.
-
-### Kalau muncul error `libxcb.so.1`
-
-Error seperti ini berarti App Service Linux yang dipakai tidak punya library OS yang dibutuhkan oleh `ultralytics` / OpenCV.
-
-```text
-ultralytics import failed: libxcb.so.1: cannot open shared object file
-```
-
-Solusi yang tepat adalah memakai **custom container**. Repo ini sudah disiapkan dengan [Dockerfile](Dockerfile) di root yang:
-
-- menginstal dependency sistem seperti `libxcb1`
-- membangun frontend
-- menyalin hasil build ke backend static
-- menjalankan `uvicorn` di dalam container
-
-Alur deploy yang disarankan:
-
-1. Build image dari `Dockerfile`.
-2. Push image ke Azure Container Registry atau registry yang Anda pakai.
-3. Ubah App Service menjadi **Web App for Containers**.
-4. Arahkan App Service ke image container tersebut.
-
-Kalau tetap memakai zip deploy ke App Service Linux code runtime, error ini bisa muncul lagi karena library OS tidak bisa dipasang dari `requirements.txt` saja.
 
 ### Cek cepat
 

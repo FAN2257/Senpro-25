@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { calculateMeal, getMealHistory, saveMealHistory } from '../lib/api';
+import { formatNutrition } from '../lib/nutrition';
 import type { MealCalculationResponse, MealHistoryEntry, MealItem } from '../types/api';
 
 const starterItems: MealItem[] = [
@@ -150,7 +151,7 @@ export function HistoryPage() {
               {Object.entries(result.total_nutrition).map(([key, value]) => (
                 <div className="list-item" key={key}>
                   <strong>{key}</strong>
-                  <span>{String(value)}</span>
+                  <span>{formatNutrition(key, value as number)}</span>
                 </div>
               ))}
             </div>
@@ -177,7 +178,7 @@ export function HistoryPage() {
             </div>
             <div className="empty-state">
               <strong>Kalori total</strong>
-              <div className="metric-value" style={{ marginTop: 8 }}>{latestNutrition.energy}</div>
+              <div className="metric-value" style={{ marginTop: 8 }}>{formatNutrition('Energy', latestNutrition.energy)}</div>
             </div>
             <div className="empty-state">
               <strong>Item</strong>
@@ -186,9 +187,9 @@ export function HistoryPage() {
           </div>
           <div className="grid-2" style={{ marginTop: 16 }}>
             <div className="list">
-              <div className="list-item"><strong>Protein</strong><span>{latestNutrition.protein}</span></div>
-              <div className="list-item"><strong>Lemak</strong><span>{latestNutrition.fat}</span></div>
-              <div className="list-item"><strong>Karbohidrat</strong><span>{latestNutrition.cho}</span></div>
+              <div className="list-item"><strong>Protein</strong><span>{formatNutrition('Protein', latestNutrition.protein)}</span></div>
+              <div className="list-item"><strong>Lemak</strong><span>{formatNutrition('Fat', latestNutrition.fat)}</span></div>
+              <div className="list-item"><strong>Karbohidrat</strong><span>{formatNutrition('CHO', latestNutrition.cho)}</span></div>
             </div>
             <div className="list">
               <div className="list-item"><strong>Kalsium</strong><span>{latestNutrition.calcium}</span></div>
