@@ -503,6 +503,17 @@ export function ScanPage() {
               Hasil scan akan tampil di sini setelah gambar diproses.
             </div>
           )}
+          {result?.detections?.length ? (
+            <div className="card" style={{ marginTop: 12 }}>
+              <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+                <h4 className="card-title">Tambahkan ke porsi makanan hari ini</h4>
+                <span className="chip">Tracker harian</span>
+              </div>
+              <p className="muted" style={{ marginTop: 8 }}>
+                Hasil scan sudah tersimpan ke riwayat. Anda bisa buka halaman riwayat untuk melihat akumulasi makanan hari ini dan total nutrisinya.
+              </p>
+            </div>
+          ) : null}
           <div className="card">
             <div className="toolbar" style={{ justifyContent: 'space-between' }}>
               <h4 className="card-title">Riwayat terakhir</h4>

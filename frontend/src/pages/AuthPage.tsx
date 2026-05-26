@@ -62,7 +62,7 @@ export function AuthPage() {
 
   useEffect(() => {
     if (sessionReady && sessionEmail) {
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [navigate, sessionEmail, sessionReady]);
 
@@ -92,7 +92,7 @@ export function AuthPage() {
     }
 
     toast.success('Berhasil masuk ke akun SnapEats.');
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
@@ -132,7 +132,7 @@ export function AuthPage() {
 
     if (data.session) {
       toast.success('Akun berhasil dibuat dan Anda sudah masuk.');
-      navigate('/');
+      navigate('/dashboard');
       return;
     }
 
@@ -162,7 +162,7 @@ export function AuthPage() {
   };
 
   const goToDashboard = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
   return (

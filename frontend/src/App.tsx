@@ -20,7 +20,8 @@ export function App() {
   return (
     <AppShell navItems={navItems}>
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/scan" element={<ScanPage />} />
         <Route path="/foods" element={<FoodsPage />} />

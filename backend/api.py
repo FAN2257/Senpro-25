@@ -71,6 +71,18 @@ nutrition_data = {}
 model_load_error = None
 
 
+def _public_model_load_error(message: str) -> str:
+    normalized = message.lower()
+
+    if 'libxcb.so.1' in normalized or 'xcb' in normalized:
+        return 'Model belum siap di environment App Service. Dependency native untuk backend vision belum tersedia.'
+
+    if 'ultralytics import failed' in normalized:
+        return 'Model belum siap dimuat di server saat ini.'
+
+    return 'Model belum siap dimuat di server saat ini.'
+
+
 class MealHistoryItem(BaseModel):
     food_name: str
     quantity_gram: float = 100.0
@@ -257,12 +269,13 @@ async def predict_food(
 
 @app.get(f"{API_PREFIX}/model-status")
 def get_model_status():
+    public_load_error = _public_model_load_error(model_load_error) if model_load_error else None
     return {
         "status": "success",
         "model_path": MODEL_PATH,
         "model_path_exists": os.path.exists(MODEL_PATH),
         "model_loaded": model is not None,
-        "load_error": model_load_error,
+        "load_error": public_load_error,
     }
 
 
