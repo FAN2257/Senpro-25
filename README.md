@@ -77,7 +77,7 @@ Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-a
 Di App Service backend, set application settings berikut:
 
 ```env
-AZURE_SQL_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:<server>.database.windows.net,1433;Database=<database>;Uid=<username>;Pwd=<password>;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;
+AZURE_SQL_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:snapeats-sql-server.database.windows.net,1433;Database=snapeatsdb;Uid=adminsenpro25;Pwd=<password>;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;
 ```
 
 Jika ingin memecah variabelnya, backend juga menerima:
@@ -91,6 +91,8 @@ AZURE_SQL_DRIVER=ODBC Driver 18 for SQL Server
 ```
 
 Backend akan membuat tabel `dbo.meal_history` otomatis saat koneksi Azure SQL berhasil.
+
+Jika SQL Database di portal Azure berstatus `Paused`, resume database dulu sebelum menguji backend. Status paused akan membuat koneksi dari App Service gagal walaupun string koneksi sudah benar.
 
 ### Deploy ke Azure App Service
 
