@@ -8,6 +8,27 @@ const starterItems: MealItem[] = [
   { food_name: 'Ayam Goreng', quantity_gram: 100 }
 ];
 
+function isSameLocalDay(left: string, right: Date) {
+  const leftDate = new Date(left);
+  return leftDate.getFullYear() === right.getFullYear()
+    && leftDate.getMonth() === right.getMonth()
+    && leftDate.getDate() === right.getDate();
+}
+
+function aggregateNutrition(entries: MealHistoryEntry[]) {
+  return entries.reduce((accumulator, entry) => {
+    const totalNutrition = entry.total_nutrition ?? {};
+    return {
+      Energy: accumulator.Energy + Number(totalNutrition.Energy ?? 0),
+      Protein: accumulator.Protein + Number(totalNutrition.Protein ?? 0),
+      Fat: accumulator.Fat + Number(totalNutrition.Fat ?? 0),
+      CHO: accumulator.CHO + Number(totalNutrition.CHO ?? 0),
+      Ca: accumulator.Ca + Number(totalNutrition.Ca ?? 0),
+      Fe: accumulator.Fe + Number(totalNutrition.Fe ?? 0)
+    };
+  }, { Energy: 0, Protein: 0, Fat: 0, CHO: 0, Ca: 0, Fe: 0 });
+}
+
 export function HistoryPage() {
   const [items, setItems] = useState<MealItem[]>(starterItems);
   const [foodName, setFoodName] = useState('');
@@ -18,6 +39,10 @@ export function HistoryPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const totalItems = useMemo(() => items.length, [items]);
+  const today = useMemo(() => new Date(), []);
+  const todayHistory = useMemo(() => savedHistory.filter((entry) => isSameLocalDay(entry.created_at, today)), [savedHistory, today]);
+  const todayScanHistory = useMemo(() => todayHistory.filter((entry) => entry.source === 'scan'), [todayHistory]);
+  const todayNutrition = useMemo(() => aggregateNutrition(todayScanHistory), [todayScanHistory]);
   const latestSavedEntry = useMemo(() => savedHistory[0] ?? null, [savedHistory]);
 
   const latestNutrition = useMemo(() => {
@@ -43,7 +68,7 @@ export function HistoryPage() {
     const loadHistory = async () => {
       setHistoryLoading(true);
       try {
-        const response = await getMealHistory(10);
+        const response = await getMealHistory(50);
         if (isActive) {
           setSavedHistory(response.items);
         }
@@ -87,7 +112,7 @@ export function HistoryPage() {
           source: 'history-page'
         });
 
-        const refreshed = await getMealHistory(10);
+        const refreshed = await getMealHistory(50);
         setSavedHistory(refreshed.items);
       } catch {
         // Riwayat tetap bisa dihitung walau penyimpanan gagal.
@@ -102,8 +127,52 @@ export function HistoryPage() {
       <div className="section-header">
         <div>
           <h3 className="section-title">Riwayat makan</h3>
-          <p className="section-description">Simpan kombinasi makanan yang sering Anda pilih dan lihat perkiraan gizinya.</p>
+          <p className="section-description">Lihat porsi hari ini, gabungkan semua hasil scan, lalu simpan riwayat makan yang lebih berguna.</p>
         </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+          <h4 className="card-title">Tracker hari ini</h4>
+          <span className="chip">{todayScanHistory.length} scan</span>
+        </div>
+        {todayScanHistory.length > 0 ? (
+          <div className="grid-3" style={{ marginTop: 16 }}>
+            <div className="empty-state">
+              <strong>Kalori total</strong>
+              <div className="metric-value" style={{ marginTop: 8 }}>{formatNutrition('Energy', todayNutrition.Energy)}</div>
+              <div className="muted" style={{ marginTop: 6 }}>Akumulasi seluruh scan hari ini.</div>
+            </div>
+            <div className="empty-state">
+              <strong>Makro utama</strong>
+              <div className="muted" style={{ marginTop: 8 }}>Protein: {formatNutrition('Protein', todayNutrition.Protein)}</div>
+              <div className="muted" style={{ marginTop: 6 }}>Lemak: {formatNutrition('Fat', todayNutrition.Fat)}</div>
+              <div className="muted" style={{ marginTop: 6 }}>Karbohidrat: {formatNutrition('CHO', todayNutrition.CHO)}</div>
+            </div>
+            <div className="empty-state">
+              <strong>Jejak makan hari ini</strong>
+              <div className="metric-value" style={{ marginTop: 8 }}>{todayHistory.reduce((sum, entry) => sum + entry.food_items.length, 0)}</div>
+              <div className="muted" style={{ marginTop: 6 }}>Item scan yang sudah masuk tracker.</div>
+            </div>
+          </div>
+        ) : (
+          <div className="empty-state" style={{ marginTop: 16 }}>
+            Belum ada hasil scan yang tersimpan hari ini.
+          </div>
+        )}
+        {todayScanHistory.length > 0 ? (
+          <div className="list" style={{ marginTop: 16 }}>
+            {todayScanHistory.slice(0, 5).map((entry) => (
+              <div className="list-item" key={entry.id}>
+                <div>
+                  <strong>{entry.meal_label ?? 'Hasil scan'}</strong>
+                  <div className="muted">{new Date(entry.created_at).toLocaleTimeString('id-ID')}</div>
+                </div>
+                <span>{formatNutrition('Energy', entry.total_nutrition?.Energy ?? 0)}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="grid-2">
@@ -166,7 +235,7 @@ export function HistoryPage() {
       {latestSavedEntry && latestNutrition ? (
         <div className="card" style={{ marginTop: 20 }}>
           <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-            <h4 className="card-title">Ringkasan analitik terakhir</h4>
+            <h4 className="card-title">Ringkasan terakhir tersimpan</h4>
             <span className="chip">{latestSavedEntry.source === 'scan' ? 'Hasil scan' : latestSavedEntry.source}</span>
           </div>
           <div className="grid-3" style={{ marginTop: 16 }}>
@@ -203,7 +272,7 @@ export function HistoryPage() {
       <div className="card">
         <h4 className="card-title">Kenapa fitur ini berguna</h4>
         <p className="muted" style={{ lineHeight: 1.7 }}>
-          Riwayat yang tersusun membantu Anda melihat kebiasaan makan dengan lebih jelas dan membuat keputusan berikutnya lebih mudah.
+          Riwayat yang tersusun membantu Anda melihat total asupan harian, membandingkan pilihan makanan, dan membuat keputusan berikutnya lebih mudah.
         </p>
       </div>
 

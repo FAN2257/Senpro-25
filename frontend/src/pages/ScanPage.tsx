@@ -126,11 +126,13 @@ export function ScanPage() {
     if (!result?.detections.length) {
       setScanInsights(null);
       setOtherCandidates([]);
+      setSelectedOtherKeys({});
       return;
     }
 
     setScanInsights(buildScanSummary(result.detections));
     setOtherCandidates(result.other_candidates ?? []);
+    setSelectedOtherKeys({});
   }, [result]);
 
   useEffect(() => {
@@ -208,25 +210,29 @@ export function ScanPage() {
       setResult(response);
       pushHistory(file.name, response);
 
+      const selectedOtherCandidates = (response.other_candidates ?? []).filter((cand) => selectedOtherKeys[`${cand.food_name}-${cand.confidence}`]);
+      const combinedDetections = [...response.detections, ...selectedOtherCandidates];
+
       try {
         const userEmail = await getCurrentUserEmail();
-        const summary = buildScanSummary(response.detections);
+        const summary = buildScanSummary(combinedDetections);
         const scaledTotalNutrition = scaleNutrition(summary.totalNutrition, portionGram);
+        const mealLabel = summary.foodItems.length > 0 ? `Scan ${summary.foodItems.map((item) => item.food_name).join(', ')}` : `Scan ${new Date().toLocaleString('id-ID')}`;
 
         await saveMealHistory({
-          meal_label: `Scan ${new Date().toLocaleString('id-ID')}`,
+          meal_label: mealLabel,
           user_email: userEmail,
           food_items: summary.foodItems,
           total_nutrition: scaledTotalNutrition,
-          details: response.detections,
+          details: combinedDetections,
           source: 'scan'
         });
       } catch {
         // Scan tetap tampil walau penyimpanan riwayat server gagal.
       }
 
-      if (response.detections.length > 0) {
-        toast.success(`${response.detections.length} makanan ditemukan.`);
+      if (combinedDetections.length > 0) {
+        toast.success(`${combinedDetections.length} makanan ditemukan dan disimpan ke tracker.`);
       } else {
         toast('Belum ada makanan yang terlihat jelas, coba foto yang lebih terang.', { icon: 'i' });
       }
@@ -307,12 +313,13 @@ export function ScanPage() {
 
     try {
       const userEmail = await getCurrentUserEmail();
+      const selectedCandidateDetails = otherCandidates.filter((cand: DetectionItem) => selectedOtherKeys[`${cand.food_name}-${cand.confidence}`]);
       await saveMealHistory({
         meal_label: `Scan ${new Date().toLocaleString('id-ID')}`,
         user_email: userEmail,
         food_items: combinedFoodItems,
         total_nutrition: totalNutrition,
-        details: result?.detections ?? [],
+        details: [...(result?.detections ?? []), ...selectedCandidateDetails],
         source: 'scan'
       });
       toast.success('Hasil tersimpan dengan kandidat tambahan.');
@@ -332,7 +339,7 @@ export function ScanPage() {
           <Sparkles size={14} /> {modelReady ? 'Siap dipakai' : 'Memuat model'}
         </span>
       </div>
-      <div className="empty-state" style={{ marginBottom: 16 }}>
+      <div className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
         {modelStatusText}
       </div>
       <div className="grid-2">

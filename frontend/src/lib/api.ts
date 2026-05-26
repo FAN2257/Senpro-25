@@ -91,15 +91,32 @@ export function getApiBaseUrl() {
 }
 
 export async function getCurrentUserEmail() {
+  const profile = await getCurrentUserProfile();
+  return profile?.email ?? null;
+}
+
+export async function getCurrentUserProfile() {
   if (!supabase) {
     return null;
   }
 
   const { data, error } = await supabase.auth.getUser();
 
-  if (error) {
+  if (error || !data.user) {
     return null;
   }
 
-  return data.user?.email ?? null;
+  const email = data.user.email ?? null;
+  const rawName = String(
+    data.user.user_metadata?.full_name ??
+      data.user.user_metadata?.name ??
+      data.user.user_metadata?.display_name ??
+      ''
+  ).trim();
+
+  return {
+    email,
+    fullName: rawName || null,
+    displayName: rawName || (email ? email.split('@')[0] : 'Pengguna')
+  };
 }

@@ -60,6 +60,12 @@ export function AuthPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (sessionReady && sessionEmail) {
+      navigate('/', { replace: true });
+    }
+  }, [navigate, sessionEmail, sessionReady]);
+
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -130,7 +136,7 @@ export function AuthPage() {
       return;
     }
 
-    toast.success('Akun dibuat. Silakan cek email untuk verifikasi akun.');
+    toast.success('Akun dibuat. Silakan cek email untuk verifikasi akun, lalu login dengan email yang sama.');
     setMode('login');
   };
 
@@ -300,7 +306,7 @@ export function AuthPage() {
           )}
 
           <div className="footer-note">
-            Akun membantu Anda menyimpan hasil scan dan kembali ke riwayat kapan saja.
+            Setelah login, Anda akan langsung diarahkan ke dashboard dan scan berikutnya tersimpan ke tracker harian.
           </div>
         </div>
       </div>
