@@ -70,6 +70,8 @@ export function ScanPage() {
   const [modelReady, setModelReady] = useState(false);
   const [modelStatusText, setModelStatusText] = useState('Memeriksa kesiapan model...');
   const [scanInsights, setScanInsights] = useState<ReturnType<typeof buildScanSummary> | null>(null);
+  const [otherCandidates, setOtherCandidates] = useState<DetectionItem[]>([]);
+  const [selectedOtherKeys, setSelectedOtherKeys] = useState<Record<string, boolean>>({});
   const [portionGram, setPortionGram] = useState(DEFAULT_PORTION_GRAM);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -95,8 +97,22 @@ export function ScanPage() {
       return null;
     }
 
-    return scaleNutrition(scanInsights.totalNutrition, portionGram);
-  }, [scanInsights, portionGram]);
+    const base = scaleNutrition(scanInsights.totalNutrition, portionGram);
+
+    const extras = { ...base } as Record<(typeof NUTRITION_KEYS)[number], number>;
+    for (const cand of otherCandidates) {
+      const key = `${cand.food_name}-${cand.confidence}`;
+      if (!selectedOtherKeys[key]) continue;
+      const nutrition = typeof cand.nutrition_info === 'string' ? null : cand.nutrition_info;
+      if (!nutrition) continue;
+      const scaled = scaleNutrition(nutrition as Record<(typeof NUTRITION_KEYS)[number], number>, portionGram);
+      for (const k of NUTRITION_KEYS) {
+        extras[k] = Number((extras[k] + (scaled[k] ?? 0)).toFixed(2));
+      }
+    }
+
+    return extras;
+  }, [scanInsights, portionGram, otherCandidates, selectedOtherKeys]);
 
   const dominantFoodDisplay = useMemo(() => {
     if (!scanInsights?.dominantFood || typeof scanInsights.dominantFood.nutrition_info === 'string') {
@@ -109,10 +125,12 @@ export function ScanPage() {
   useEffect(() => {
     if (!result?.detections.length) {
       setScanInsights(null);
+      setOtherCandidates([]);
       return;
     }
 
     setScanInsights(buildScanSummary(result.detections));
+    setOtherCandidates(result.other_candidates ?? []);
   }, [result]);
 
   useEffect(() => {
@@ -271,6 +289,38 @@ export function ScanPage() {
     );
   };
 
+  const toggleOtherSelection = (item: DetectionItem) => {
+    const key = `${item.food_name}-${item.confidence}`;
+    setSelectedOtherKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const saveWithSelectedOthers = async () => {
+    if (!scanInsights) return;
+
+    const selected = otherCandidates.filter((c) => selectedOtherKeys[`${c.food_name}-${c.confidence}`]);
+    const combinedFoodItems = [
+      ...scanInsights.foodItems,
+      ...selected.map((s) => ({ food_name: s.food_name, quantity_gram: 100 }))
+    ];
+
+    const totalNutrition = displayNutrition ?? scaleNutrition(scanInsights.totalNutrition, portionGram);
+
+    try {
+      const userEmail = await getCurrentUserEmail();
+      await saveMealHistory({
+        meal_label: `Scan ${new Date().toLocaleString('id-ID')}`,
+        user_email: userEmail,
+        food_items: combinedFoodItems,
+        total_nutrition: totalNutrition,
+        details: result?.detections ?? [],
+        source: 'scan'
+      });
+      toast.success('Hasil tersimpan dengan kandidat tambahan.');
+    } catch {
+      toast.error('Penyimpanan riwayat gagal.');
+    }
+  };
+
   return (
     <MotionSection className="section">
       <div className="section-header">
@@ -408,6 +458,37 @@ export function ScanPage() {
               <p className="footer-note" style={{ marginTop: 8 }}>
                 Quick analytic ini menampilkan makro dan mikro pada basis {portionGram} g, sementara detail item tetap mengacu ke referensi 100 g.
               </p>
+            </div>
+          ) : null}
+
+          {otherCandidates && otherCandidates.length > 0 ? (
+            <div className="card" style={{ marginTop: 12 }}>
+              <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+                <h4 className="card-title">Other possible detections</h4>
+                <span className="chip">{otherCandidates.length} kandidat</span>
+              </div>
+              <div className="list" style={{ marginTop: 12 }}>
+                {otherCandidates.map((cand) => {
+                  const key = `${cand.food_name}-${cand.confidence}`;
+                  return (
+                    <div className="list-item" key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong>{cand.food_name}</strong>
+                        <div className="muted" style={{ fontSize: 12 }}>{Math.round(cand.confidence * 100)}% confidence</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <input type="checkbox" checked={!!selectedOtherKeys[key]} onChange={() => toggleOtherSelection(cand)} />
+                          <span style={{ fontSize: 12 }}>Include</span>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="form-actions" style={{ marginTop: 12 }}>
+                <button className="btn btn-primary" type="button" onClick={saveWithSelectedOthers}>Include selected & Save</button>
+              </div>
             </div>
           ) : null}
           {result?.detections?.length ? result.detections.map(renderDetection) : (

@@ -188,7 +188,14 @@ def service_worker_asset():
 
 
 @app.post(f"{API_PREFIX}/predict")
-async def predict_food(file: UploadFile = File(...)):
+async def predict_food(
+    file: UploadFile = File(...),
+    detect_conf: float = Query(0.15, ge=0.0, le=1.0),
+    primary_conf: float = Query(0.25, ge=0.0, le=1.0),
+    iou: float = Query(0.6, ge=0.0, le=1.0),
+    max_det: int = Query(100, ge=1, le=1000),
+    multi_label: bool = Query(True)
+):
     if model is None:
         detail = "Model YOLO belum tersedia/tidak terbaca. Pastikan proses training sudah selesai."
         if model_load_error:
@@ -202,25 +209,27 @@ async def predict_food(file: UploadFile = File(...)):
     except Exception:
         raise HTTPException(status_code=400, detail="File yang diupload bukan format gambar yang valid.")
 
-    # Menjalankan inferensi model AI
-    results = model(image)
+    # Menjalankan inferensi model AI dengan parameter yang bisa dituning
+    results = model.predict(image, conf=detect_conf, iou=iou, max_det=max_det, multi_label=multi_label, verbose=False)
 
-    response_data = {"status": "success", "detections": []}
+    response_data = {"status": "success", "detections": [], "other_candidates": [], "meta": {"detect_conf": detect_conf, "primary_conf": primary_conf, "iou": iou, "max_det": max_det, "multi_label": multi_label}}
 
     for result in results:
         boxes = result.boxes
         for box in boxes:
-            # Dapatkan Class ID & Nama
-            class_id = int(box.cls[0].item())
-            class_name = model.names[class_id]
-            confidence = float(box.conf[0].item())
-
-            # Abaikan prediksi yang nilai percayanya rendah (opsional, misal < 30%)
-            if confidence < 0.3:
+            try:
+                class_id = int(box.cls[0].item())
+                class_name = model.names[class_id]
+                confidence = float(box.conf[0].item())
+            except Exception:
+                # If parsing fails, skip this box
                 continue
 
             # Dapatkan Box coordinates [x_min, y_min, x_max, y_max]
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            try:
+                x1, y1, x2, y2 = box.xyxy[0].tolist()
+            except Exception:
+                x1 = y1 = x2 = y2 = 0.0
 
             # Cari informasi gizi
             gizi = nutrition_data.get(class_name, None)
@@ -237,7 +246,11 @@ async def predict_food(file: UploadFile = File(...)):
                 "nutrition_info": gizi if gizi else "Data gizi belum tersedia"
             }
 
-            response_data["detections"].append(detection)
+            # Split into primary detections and other candidates based on primary_conf
+            if confidence >= primary_conf:
+                response_data["detections"].append(detection)
+            else:
+                response_data["other_candidates"].append(detection)
 
     return response_data
 

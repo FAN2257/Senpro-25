@@ -25,6 +25,7 @@ export interface DetectionItem {
 export interface NutritionPredictionResponse {
   status: string;
   detections: DetectionItem[];
+  other_candidates?: DetectionItem[];
 }
 
 export interface ModelStatusResponse {
