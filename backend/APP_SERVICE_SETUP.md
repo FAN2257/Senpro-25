@@ -22,6 +22,13 @@ SQLAlchemy/PyODBC database access uses SQL authentication. Set one of these form
 - `AZURE_SQL_CONNECTION_STRING = Driver={ODBC Driver 18 for SQL Server};Server=tcp:snapeats-sql-server.database.windows.net,1433;Database=snapeatsdb;Uid=adminsenpro25;Pwd=<password>;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;`
 - or the split values: `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_SQL_USERNAME`, `AZURE_SQL_PASSWORD`, `AZURE_SQL_DRIVER`
 
+Recommended "always works" setting for this app:
+
+- Use a single `AZURE_SQL_CONNECTION_STRING` with `ODBC Driver 18 for SQL Server`
+- Keep `Encrypt=yes` and `TrustServerCertificate=no`
+- Use the SQL login user, not `Authentication="Active Directory Default"`
+- Do not mix ADO.NET/JDBC strings into App Service settings; the backend reads the ODBC connection string only
+
 Notes:
 - `MPLBACKEND=Agg` prevents matplotlib from trying to use GUI backends that require X11.
 - `MPLCONFIGDIR` should point to a writable directory (e.g. /tmp/matplotlib) so matplotlib can build its font cache there instead of a read-only system directory.
@@ -36,6 +43,8 @@ Notes:
 - Call `GET /api/model-status` and check `model_loaded` and `load_error` fields.
 - Call `GET /api/db-status` and check `db_ready`, `connection_configured`, and `meal_history_table_ready` fields.
 - If the SQL Database resource is Paused, Resume it first. A paused database will not accept app connections.
+- To resume: Azure Portal > SQL databases > `snapeatsdb` > Overview > click `Resume`.
+- If you prefer CLI: `az sql db resume --resource-group <rg> --server snapeats-sql-server --name snapeatsdb`.
 - If `load_error` shows `libxcb` or other missing system libraries after the above env vars are set, then containerless deployment may still be blocked by binary wheel linkage issues; contact me and I'll provide a step-by-step fallback (Azure VM or App Service for Containers).
 
 5) Additional tips

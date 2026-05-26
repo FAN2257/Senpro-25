@@ -80,6 +80,8 @@ Di App Service backend, set application settings berikut:
 AZURE_SQL_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:snapeats-sql-server.database.windows.net,1433;Database=snapeatsdb;Uid=adminsenpro25;Pwd=<password>;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;
 ```
 
+Setting yang paling stabil untuk repo ini adalah satu connection string ODBC seperti contoh di atas. Jangan pakai string ADO.NET atau JDBC di App Service karena backend FastAPI di repo ini membaca ODBC connection string lewat SQLAlchemy/PyODBC.
+
 Jika ingin memecah variabelnya, backend juga menerima:
 
 ```env
@@ -93,6 +95,18 @@ AZURE_SQL_DRIVER=ODBC Driver 18 for SQL Server
 Backend akan membuat tabel `dbo.meal_history` otomatis saat koneksi Azure SQL berhasil.
 
 Jika SQL Database di portal Azure berstatus `Paused`, resume database dulu sebelum menguji backend. Status paused akan membuat koneksi dari App Service gagal walaupun string koneksi sudah benar.
+
+Cara resume yang paling cepat:
+
+1. Azure Portal > SQL databases > `snapeatsdb`.
+2. Buka `Overview`.
+3. Klik `Resume`.
+
+Kalau pakai Azure CLI:
+
+```powershell
+az sql db resume --resource-group <resource-group> --server snapeats-sql-server --name snapeatsdb
+```
 
 ### Deploy ke Azure App Service
 
