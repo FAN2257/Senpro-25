@@ -73,10 +73,16 @@ def initialize_database() -> bool:
                             food_items NVARCHAR(MAX) NOT NULL,
                             total_nutrition NVARCHAR(MAX) NOT NULL,
                             details NVARCHAR(MAX) NULL,
+                            metadata NVARCHAR(MAX) NULL,
                             source NVARCHAR(50) NOT NULL DEFAULT 'manual',
                             created_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
                         );
-                    END
+                    END;
+
+                    IF COL_LENGTH('dbo.meal_history', 'metadata') IS NULL
+                    BEGIN
+                        ALTER TABLE dbo.meal_history ADD metadata NVARCHAR(MAX) NULL;
+                    END;
                     """
                 )
             )
@@ -97,6 +103,29 @@ def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
     if engine is None:
         return None
 
+    known_keys = {
+        "user_email",
+        "meal_label",
+        "food_items",
+        "total_nutrition",
+        "details",
+        "metadata",
+        "source",
+    }
+
+    metadata_payload = payload.get("metadata")
+    extra_payload = {key: value for key, value in payload.items() if key not in known_keys}
+    if extra_payload:
+        if isinstance(metadata_payload, dict):
+            metadata_payload = {**metadata_payload, **extra_payload}
+        elif metadata_payload is None:
+            metadata_payload = extra_payload
+        else:
+            metadata_payload = {
+                "value": metadata_payload,
+                "extra": extra_payload,
+            }
+
     try:
         with engine.begin() as connection:
             result = connection.execute(
@@ -108,10 +137,11 @@ def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
                         food_items,
                         total_nutrition,
                         details,
+                        metadata,
                         source
                     )
                     OUTPUT inserted.id, inserted.created_at
-                    VALUES (:user_email, :meal_label, :food_items, :total_nutrition, :details, :source)
+                    VALUES (:user_email, :meal_label, :food_items, :total_nutrition, :details, :metadata, :source)
                     """
                 ),
                 {
@@ -120,6 +150,7 @@ def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
                     "food_items": json.dumps(payload.get("food_items", []), ensure_ascii=False),
                     "total_nutrition": json.dumps(payload.get("total_nutrition", {}), ensure_ascii=False),
                     "details": json.dumps(payload.get("details", []), ensure_ascii=False),
+                    "metadata": json.dumps(metadata_payload, ensure_ascii=False) if metadata_payload is not None else None,
                     "source": payload.get("source", "manual"),
                 },
             )
@@ -130,7 +161,7 @@ def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
             created_at = row["created_at"]
             return {
                 "id": str(row["id"]),
-                "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at)
+                "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at),
             }
     except SQLAlchemyError as exc:
         print(f"[WARNING] Failed to save meal history: {exc}")
@@ -154,6 +185,7 @@ def list_meal_history(limit: int = 10) -> list[dict[str, Any]]:
                         food_items,
                         total_nutrition,
                         details,
+                        metadata,
                         source,
                         created_at
                     FROM (
@@ -170,6 +202,7 @@ def list_meal_history(limit: int = 10) -> list[dict[str, Any]]:
 
             rows: list[dict[str, Any]] = []
             for row in result.mappings().all():
+                metadata_value = row["metadata"] if row["metadata"] else None
                 rows.append(
                     {
                         "id": str(row["id"]),
@@ -178,6 +211,7 @@ def list_meal_history(limit: int = 10) -> list[dict[str, Any]]:
                         "food_items": json.loads(row["food_items"]) if row["food_items"] else [],
                         "total_nutrition": json.loads(row["total_nutrition"]) if row["total_nutrition"] else {},
                         "details": json.loads(row["details"]) if row["details"] else [],
+                        "metadata": json.loads(metadata_value) if metadata_value else {},
                         "source": row["source"],
                         "created_at": row["created_at"].isoformat() if hasattr(row["created_at"], "isoformat") else str(row["created_at"]),
                     }

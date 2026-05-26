@@ -86,6 +86,10 @@ export function getModelStatus() {
   return apiFetch<ModelStatusResponse>('/model-status');
 }
 
+export function getDatabaseStatus() {
+  return apiFetch<{ status: string; db_ready: boolean; connection_configured: boolean; meal_history_table_ready: boolean }>('/db-status');
+}
+
 export function getApiBaseUrl() {
   return API_BASE_URL;
 }

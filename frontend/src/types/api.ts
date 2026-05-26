@@ -70,6 +70,7 @@ export interface MealHistoryEntry {
   food_items: MealItem[];
   total_nutrition: Record<string, number>;
   details: unknown[];
+  metadata?: Record<string, unknown>;
   source: string;
   created_at: string;
 }
@@ -87,6 +88,7 @@ export interface SaveMealHistoryPayload {
   total_nutrition: Record<string, number>;
   details?: unknown[];
   source?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SaveMealHistoryResponse {

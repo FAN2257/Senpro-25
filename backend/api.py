@@ -24,13 +24,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from pydantic import ConfigDict
 # Import ultralytics lazily inside startup to avoid import-time native dependency
 # errors on App Service (e.g. missing libxcb). We'll attempt to import when
 # initializing the model and continue without persistence/AI if unavailable.
 from PIL import Image
 import uvicorn
 
-from db import initialize_database, is_database_ready, list_meal_history, save_meal_history
+from db import get_engine, initialize_database, is_database_ready, list_meal_history, save_meal_history
 
 # PyTorch 2.6 changes torch.load() to weights_only=True by default, which can
 # block older Ultralytics checkpoints during startup on Azure App Service.
@@ -89,6 +90,8 @@ class MealHistoryItem(BaseModel):
 
 
 class MealHistoryEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     meal_label: Optional[str] = None
     user_email: Optional[str] = None
     food_items: list[MealHistoryItem]
@@ -388,6 +391,17 @@ def get_meal_history(limit: int = Query(default=10, ge=1, le=100)):
         "status": "success",
         "total_items": len(records),
         "items": records
+    }
+
+
+@app.get(f"{API_PREFIX}/db-status")
+def get_db_status():
+    db_ready = initialize_database()
+    return {
+        "status": "success",
+        "db_ready": is_database_ready(),
+        "connection_configured": get_engine() is not None,
+        "meal_history_table_ready": db_ready,
     }
 
 
