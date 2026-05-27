@@ -7,3 +7,4 @@ python-multipart>=0.0.9
 sqlalchemy>=2.0.0
 pyodbc>=5.0.1
 matplotlib>=3.6.0
+supabase>=2.6.0

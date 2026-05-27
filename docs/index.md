@@ -36,7 +36,7 @@ Bagaimana menyediakan platform pemantau nutrisi otomatis berbasis AI yang mampu 
 
 ## Ide Solusi & Rancangan Fitur
 
-Aplikasi web progresif (PWA) yang menggunakan **Computer Vision** untuk deteksi makanan otomatis, di-deploy di **Azure App Service**, dan menggunakan **Azure SQL** untuk penyimpanan riwayat nutrisi.
+Aplikasi web progresif (PWA) yang menggunakan **Computer Vision** untuk deteksi makanan otomatis, di-deploy di **Azure App Service**, dan menggunakan **Supabase** untuk penyimpanan riwayat nutrisi.
 
 | Fitur | Keterangan |
 |-------|-----------|

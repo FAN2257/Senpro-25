@@ -31,7 +31,7 @@ from pydantic import ConfigDict
 from PIL import Image
 import uvicorn
 
-from db import get_engine, initialize_database, is_database_ready, list_meal_history, save_meal_history
+from db import get_database_backend_name, get_database_connection_configured, initialize_database, is_database_ready, list_meal_history, save_meal_history
 
 # PyTorch 2.6 changes torch.load() to weights_only=True by default, which can
 # block older Ultralytics checkpoints during startup on Azure App Service.
@@ -138,9 +138,9 @@ def load_assets():
         print(f"[WARNING] Gagal memuat data JSON: {e}")
 
     if initialize_database():
-        print("[INFO] Azure SQL connection ready")
+        print(f"[INFO] Database ready via {get_database_backend_name()}")
     else:
-        print("[INFO] Azure SQL not configured; running without persistent history")
+        print("[INFO] Database not configured; running without persistent history")
 
 
 @app.get("/")
@@ -372,7 +372,7 @@ def calculate_meal(meal: MealRequest):
 def create_meal_history(entry: MealHistoryEntry):
     saved = save_meal_history(entry.model_dump())
     if not saved:
-        raise HTTPException(status_code=503, detail="Riwayat belum bisa disimpan ke Azure SQL.")
+        raise HTTPException(status_code=503, detail="Riwayat belum bisa disimpan ke database.")
 
     return {
         "status": "success",
@@ -384,7 +384,7 @@ def create_meal_history(entry: MealHistoryEntry):
 @app.get(f"{API_PREFIX}/history/meals")
 def get_meal_history(limit: int = Query(default=10, ge=1, le=100)):
     if not is_database_ready():
-        raise HTTPException(status_code=503, detail="Azure SQL belum dikonfigurasi.")
+        raise HTTPException(status_code=503, detail="Database belum dikonfigurasi.")
 
     records = list_meal_history(limit=limit)
     return {
@@ -400,7 +400,8 @@ def get_db_status():
     return {
         "status": "success",
         "db_ready": is_database_ready(),
-        "connection_configured": get_engine() is not None,
+        "connection_configured": get_database_connection_configured(),
+        "backend": get_database_backend_name(),
         "meal_history_table_ready": db_ready,
     }
 

@@ -7,9 +7,17 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
+try:
+    from supabase import Client, create_client
+except Exception:  # pragma: no cover - optional dependency during local bootstrap
+    Client = Any  # type: ignore[assignment]
+    create_client = None  # type: ignore[assignment]
+
 
 _engine: Engine | None = None
+_supabase_client: Client | None = None
 _db_ready = False
+_backend_name = "none"
 
 
 def _build_connection_string() -> str | None:
@@ -37,8 +45,71 @@ def _build_connection_string() -> str | None:
     return f"mssql+pyodbc:///?odbc_connect={quote_plus(odbc)}"
 
 
+def _build_supabase_client() -> Client | None:
+    global _supabase_client, _backend_name
+
+    if _supabase_client is not None:
+        return _supabase_client
+
+    supabase_url = os.getenv("SUPABASE_URL") or os.getenv("VITE_SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    supabase_service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
+
+    if not supabase_url or not supabase_service_key or create_client is None:
+        return None
+
+    _supabase_client = create_client(supabase_url, supabase_service_key)
+    _backend_name = "supabase"
+    return _supabase_client
+
+
+def _json_default(value: Any, fallback: Any) -> Any:
+    if value is None:
+        return fallback
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except Exception:
+            return value
+    return value
+
+
+def _normalize_payload_dict(payload: dict[str, Any]) -> dict[str, Any]:
+    known_keys = {
+        "user_email",
+        "meal_label",
+        "food_items",
+        "total_nutrition",
+        "details",
+        "metadata",
+        "source",
+    }
+
+    metadata_payload = payload.get("metadata")
+    extra_payload = {key: value for key, value in payload.items() if key not in known_keys}
+    if extra_payload:
+        if isinstance(metadata_payload, dict):
+            metadata_payload = {**metadata_payload, **extra_payload}
+        elif metadata_payload is None:
+            metadata_payload = extra_payload
+        else:
+            metadata_payload = {
+                "value": metadata_payload,
+                "extra": extra_payload,
+            }
+
+    return {
+        "user_email": payload.get("user_email"),
+        "meal_label": payload.get("meal_label"),
+        "food_items": payload.get("food_items", []),
+        "total_nutrition": payload.get("total_nutrition", {}),
+        "details": payload.get("details", []),
+        "metadata": metadata_payload if metadata_payload is not None else {},
+        "source": payload.get("source", "manual"),
+    }
+
+
 def get_engine() -> Engine | None:
-    global _engine
+    global _engine, _backend_name
 
     if _engine is not None:
         return _engine
@@ -48,11 +119,23 @@ def get_engine() -> Engine | None:
         return None
 
     _engine = create_engine(connection_string, pool_pre_ping=True, future=True)
+    _backend_name = "azure_sql"
     return _engine
 
 
 def initialize_database() -> bool:
     global _db_ready
+
+    supabase_client = _build_supabase_client()
+    if supabase_client is not None:
+        try:
+            supabase_client.table("meal_history").select("id").limit(1).execute()
+            _db_ready = True
+            return True
+        except Exception as exc:
+            print(f"[WARNING] Supabase init failed: {exc}")
+            _db_ready = False
+            return False
 
     engine = get_engine()
     if engine is None:
@@ -95,36 +178,50 @@ def initialize_database() -> bool:
 
 
 def is_database_ready() -> bool:
-    return _db_ready and get_engine() is not None
+    return _db_ready and get_database_connection_configured()
+
+
+def get_database_connection_configured() -> bool:
+    return _build_supabase_client() is not None or get_engine() is not None
+
+
+def get_database_backend_name() -> str:
+    if _build_supabase_client() is not None:
+        return "supabase"
+    if get_engine() is not None:
+        return "azure_sql"
+    return "none"
 
 
 def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
+    normalized_payload = _normalize_payload_dict(payload)
+
+    supabase_client = _build_supabase_client()
+    if supabase_client is not None:
+        try:
+            result = (
+                supabase_client.table("meal_history")
+                .insert(normalized_payload)
+                .select("id, created_at")
+                .execute()
+            )
+            inserted_rows = getattr(result, "data", None) or []
+            if not inserted_rows:
+                return None
+
+            row = inserted_rows[0]
+            created_at = row.get("created_at")
+            return {
+                "id": str(row.get("id")),
+                "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at),
+            }
+        except Exception as exc:
+            print(f"[WARNING] Failed to save meal history to Supabase: {exc}")
+            return None
+
     engine = get_engine()
     if engine is None:
         return None
-
-    known_keys = {
-        "user_email",
-        "meal_label",
-        "food_items",
-        "total_nutrition",
-        "details",
-        "metadata",
-        "source",
-    }
-
-    metadata_payload = payload.get("metadata")
-    extra_payload = {key: value for key, value in payload.items() if key not in known_keys}
-    if extra_payload:
-        if isinstance(metadata_payload, dict):
-            metadata_payload = {**metadata_payload, **extra_payload}
-        elif metadata_payload is None:
-            metadata_payload = extra_payload
-        else:
-            metadata_payload = {
-                "value": metadata_payload,
-                "extra": extra_payload,
-            }
 
     try:
         with engine.begin() as connection:
@@ -145,13 +242,13 @@ def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
                     """
                 ),
                 {
-                    "user_email": payload.get("user_email"),
-                    "meal_label": payload.get("meal_label"),
-                    "food_items": json.dumps(payload.get("food_items", []), ensure_ascii=False),
-                    "total_nutrition": json.dumps(payload.get("total_nutrition", {}), ensure_ascii=False),
-                    "details": json.dumps(payload.get("details", []), ensure_ascii=False),
-                    "metadata": json.dumps(metadata_payload, ensure_ascii=False) if metadata_payload is not None else None,
-                    "source": payload.get("source", "manual"),
+                    "user_email": normalized_payload.get("user_email"),
+                    "meal_label": normalized_payload.get("meal_label"),
+                    "food_items": json.dumps(normalized_payload.get("food_items", []), ensure_ascii=False),
+                    "total_nutrition": json.dumps(normalized_payload.get("total_nutrition", {}), ensure_ascii=False),
+                    "details": json.dumps(normalized_payload.get("details", []), ensure_ascii=False),
+                    "metadata": json.dumps(normalized_payload.get("metadata", {}), ensure_ascii=False),
+                    "source": normalized_payload.get("source", "manual"),
                 },
             )
             row = result.mappings().first()
@@ -169,6 +266,35 @@ def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def list_meal_history(limit: int = 10) -> list[dict[str, Any]]:
+    supabase_client = _build_supabase_client()
+    if supabase_client is not None:
+        try:
+            result = (
+                supabase_client.table("meal_history")
+                .select("id, user_email, meal_label, food_items, total_nutrition, details, metadata, source, created_at")
+                .order("created_at", desc=True)
+                .limit(int(limit))
+                .execute()
+            )
+            rows = getattr(result, "data", None) or []
+            return [
+                {
+                    "id": str(row.get("id")),
+                    "user_email": row.get("user_email"),
+                    "meal_label": row.get("meal_label"),
+                    "food_items": _json_default(row.get("food_items"), []),
+                    "total_nutrition": _json_default(row.get("total_nutrition"), {}),
+                    "details": _json_default(row.get("details"), []),
+                    "metadata": _json_default(row.get("metadata"), {}),
+                    "source": row.get("source", "manual"),
+                    "created_at": row.get("created_at").isoformat() if hasattr(row.get("created_at"), "isoformat") else str(row.get("created_at")),
+                }
+                for row in rows
+            ]
+        except Exception as exc:
+            print(f"[WARNING] Failed to read meal history from Supabase: {exc}")
+            return []
+
     engine = get_engine()
     if engine is None:
         return []

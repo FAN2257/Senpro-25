@@ -72,67 +72,49 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<SUPABASE_PUBLISHABLE_KEY>
 
 Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-auth-testing.md).
 
-### Environment backend untuk Azure SQL
+### Environment backend untuk Supabase
 
 Di App Service backend, set application settings berikut:
 
 ```env
-AZURE_SQL_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:snapeats-sql-server.database.windows.net,1433;Database=snapeatsdb;Uid=adminsenpro25;Pwd=<password>;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;
+SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
+PORT=8000
+TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+MPLBACKEND=Agg
+QT_QPA_PLATFORM=offscreen
+DISPLAY=
+MPLCONFIGDIR=/tmp/matplotlib
+PYTHONUNBUFFERED=1
 ```
 
-Setting yang paling stabil untuk repo ini adalah satu connection string ODBC seperti contoh di atas. Jangan pakai string ADO.NET atau JDBC di App Service karena backend FastAPI di repo ini membaca ODBC connection string lewat SQLAlchemy/PyODBC.
+Backend sekarang memprioritaskan Supabase sebagai penyimpanan riwayat. `SUPABASE_SERVICE_ROLE_KEY` hanya untuk backend dan jangan pernah dipasang di frontend.
 
-Jika ingin memecah variabelnya, backend juga menerima:
+Frontend tetap memakai key publik/publishable dari Supabase:
 
 ```env
-AZURE_SQL_SERVER=tcp:<server>.database.windows.net,1433
-AZURE_SQL_DATABASE=<database>
-AZURE_SQL_USERNAME=<username>
-AZURE_SQL_PASSWORD=<password>
-AZURE_SQL_DRIVER=ODBC Driver 18 for SQL Server
+VITE_SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
+VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_OR_PUBLISHABLE_KEY>
 ```
 
-Backend akan membuat tabel `dbo.meal_history` otomatis saat koneksi Azure SQL berhasil.
+Schema riwayat ada di [backend/supabase_schema.sql](backend/supabase_schema.sql). Buka **SQL Editor** di Supabase, klik **New query**, lalu jalankan isi file itu sekali untuk membuat tabel `meal_history`.
 
-Jika SQL Database di portal Azure berstatus `Paused`, resume database dulu sebelum menguji backend. Status paused akan membuat koneksi dari App Service gagal walaupun string koneksi sudah benar.
-
-Cara resume yang paling cepat:
-
-1. Azure Portal > SQL databases > `snapeatsdb`.
-2. Buka `Overview`.
-3. Klik `Resume`.
-
-Kalau pakai Azure CLI:
-
-```powershell
-az sql db resume --resource-group <resource-group> --server snapeats-sql-server --name snapeatsdb
-```
+Jika Anda tetap ingin memakai Azure SQL sebagai fallback, backend masih mendukung `AZURE_SQL_CONNECTION_STRING`, tetapi Supabase sekarang adalah jalur utama.
 
 ### Deploy ke Azure App Service
 
 Panduan ini memakai 2 App Service: satu untuk backend FastAPI dan satu untuk frontend Vite.
 
-#### 1) Siapkan Azure SQL Database
+1. Siapkan Supabase project
 
-1. Buka [portal Azure](https://portal.azure.com).
-2. Klik **Create a resource**.
-3. Cari **SQL Database**.
-4. Klik **Create**.
-5. Isi tab **Basics**:
-	- **Subscription**: pilih subscription Anda.
-	- **Resource group**: pilih resource group yang sudah ada.
-	- **Database name**: misalnya `snapeatsdb`.
-	- **Server**: klik **Create new**.
-6. Pada form server baru, isi:
-	- **Server name**: misalnya `snapeats-sql-server`.
-	- **Location**: pilih region yang sama dengan App Service jika memungkinkan.
-	- **Authentication method**: SQL authentication.
-	- **Server admin login** dan **Password**: simpan dengan aman.
-7. Klik **OK**.
-8. Klik **Review + create** lalu **Create**.
-9. Setelah resource selesai dibuat, buka SQL Database tersebut.
-10. Klik **Set server firewall** atau buka **Networking**.
-11. Aktifkan akses dari Azure services bila tersedia, atau tambahkan firewall rule agar App Service bisa terhubung.
+1. Buka [Supabase Dashboard](https://supabase.com/dashboard).
+2. Klik **New project**.
+3. Pilih organization.
+4. Isi **Project name**, **Database password**, dan region.
+5. Tunggu provisioning selesai.
+6. Buka **Settings** > **API** dan salin `Project URL`, `anon public key`, serta `service_role key`.
+7. Buka **SQL Editor** > **New query**.
+8. Tempel isi [backend/supabase_schema.sql](backend/supabase_schema.sql) lalu klik **Run**.
 
 #### 2) Buat App Service untuk backend
 
@@ -148,27 +130,33 @@ Panduan ini memakai 2 App Service: satu untuk backend FastAPI dan satu untuk fro
 	- **Operating System**: `Linux`.
 	- **Region**: pilih region yang dekat dengan SQL Database.
 5. Klik **Review + create** lalu **Create**.
-6. Setelah App Service siap, buka resource `snapeats-backend`.
+9. Setelah App Service siap, buka resource `snapeats-backend`.
 7. Buka **Configuration** > **Application settings**.
 8. Klik **New application setting**.
-9. Tambahkan salah satu opsi konfigurasi berikut:
-	- **Opsi 1**: `AZURE_SQL_CONNECTION_STRING`
-	- **Opsi 2**: `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_SQL_USERNAME`, `AZURE_SQL_PASSWORD`, `AZURE_SQL_DRIVER`
-10. Tambahkan juga `PORT` dengan nilai `8000`.
-11. Klik **Save**.
-12. Buka **Configuration** > **General settings**.
-13. Pada bagian **Startup Command**, isi:
+9. Tambahkan application settings berikut:
+	- `SUPABASE_URL`
+	- `SUPABASE_SERVICE_ROLE_KEY`
+	- `PORT` = `8000`
+	- `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD` = `1`
+	- `MPLBACKEND` = `Agg`
+	- `QT_QPA_PLATFORM` = `offscreen`
+	- `DISPLAY` = kosong
+	- `MPLCONFIGDIR` = `/tmp/matplotlib`
+	- `PYTHONUNBUFFERED` = `1`
+10. Klik **Save**.
+11. Buka **Configuration** > **General settings**.
+12. Pada bagian **Startup Command**, isi:
 
 ```bash
 python -m uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
-14. Klik **Save**.
-15. Buka **Deployment Center**.
-16. Pilih cara deploy yang Anda pakai, misalnya GitHub Actions, Local Git, atau upload package.
-17. Deploy folder `backend/` ke App Service ini.
-18. Setelah deploy selesai, buka **Log stream** atau halaman **Overview** untuk melihat URL backend.
-19. Coba buka `https://<nama-backend>.azurewebsites.net/` dan pastikan endpoint root merespons.
+13. Klik **Save**.
+14. Buka **Deployment Center**.
+15. Pilih cara deploy yang Anda pakai, misalnya GitHub Actions, Local Git, atau upload package.
+16. Deploy folder `backend/` ke App Service ini.
+17. Setelah deploy selesai, buka **Log stream** atau halaman **Overview** untuk melihat URL backend.
+18. Coba buka `https://<nama-backend>.azurewebsites.net/` dan pastikan endpoint root merespons.
 
 #### 3) Buat App Service untuk frontend
 
@@ -199,7 +187,7 @@ npm run build
 
 11. Deploy isi folder `frontend/dist` ke App Service frontend.
 12. Setelah deploy selesai, buka URL frontend dan pastikan halaman utama muncul.
-13. Coba halaman **Scan** dan **Riwayat** untuk memastikan frontend terhubung ke backend Azure.
+13. Coba halaman **Scan** dan **Riwayat** untuk memastikan frontend terhubung ke backend.
 
 #### 4) Verifikasi end-to-end
 
@@ -208,13 +196,13 @@ npm run build
 3. Upload foto makanan lalu jalankan analisis.
 4. Buka halaman **Riwayat**.
 5. Jalankan perhitungan nutrisi.
-6. Pastikan data baru tampil di bagian **Riwayat tersimpan di Azure SQL**.
+6. Pastikan data baru tampil di bagian **Riwayat tersimpan di Supabase**.
 
 #### 5) Hal yang sering terlupa
 
 1. Jangan biarkan `VITE_API_BASE_URL` tetap mengarah ke `localhost`.
 2. Pastikan `allow_origins` di backend disesuaikan ke domain production saat aplikasi sudah online.
-3. Pastikan App Service backend bisa menjangkau Azure SQL melalui firewall / networking yang benar.
+3. Pastikan `SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY` sudah benar di App Service backend.
 4. Jika deploy frontend gagal karena routing SPA, pastikan App Service atau static server mengarahkan request non-file ke `index.html`.
 
 Jika Anda ingin satu App Service saja, backend FastAPI juga bisa menyajikan hasil build frontend. Untuk repo ini, dua App Service tetap lebih mudah dipisah dan dioperasikan.

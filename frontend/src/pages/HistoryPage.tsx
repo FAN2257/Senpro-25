@@ -278,7 +278,7 @@ export function HistoryPage() {
 
       <div className="card" style={{ marginTop: 20 }}>
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-          <h4 className="card-title">Riwayat tersimpan di Azure SQL</h4>
+          <h4 className="card-title">Riwayat tersimpan di Supabase</h4>
           <span className="chip">{historyLoading ? 'Memuat...' : `${savedHistory.length} data`}</span>
         </div>
         {savedHistory.length > 0 ? (
@@ -295,7 +295,7 @@ export function HistoryPage() {
           </div>
         ) : (
           <div className="empty-state" style={{ marginTop: 12 }}>
-            {historyLoading ? 'Memuat riwayat dari server...' : 'Belum ada riwayat yang tersimpan ke Azure SQL.'}
+            {historyLoading ? 'Memuat riwayat dari server...' : 'Belum ada riwayat yang tersimpan ke database.'}
           </div>
         )}
       </div>
