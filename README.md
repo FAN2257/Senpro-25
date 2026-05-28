@@ -72,6 +72,20 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<SUPABASE_PUBLISHABLE_KEY>
 
 Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-auth-testing.md).
 
+Supaya deployment berjalan penuh, siapkan secrets berikut di GitHub Actions:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `AZURE_WEBAPP_PUBLISH_PROFILE`
+
+Di Supabase Dashboard, pastikan juga **Authentication** > **URL Configuration** berisi:
+
+- **Site URL**: `https://snapeats-backend.azurewebsites.net`
+- **Redirect URLs**: tambahkan `https://snapeats-backend.azurewebsites.net/auth`
+
+Kalau frontend Anda nanti dipindah ke domain sendiri, tambahkan domain itu juga ke daftar redirect.
+
 ### Environment backend untuk Supabase
 
 Di App Service backend, set application settings berikut:

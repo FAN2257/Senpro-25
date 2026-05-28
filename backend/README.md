@@ -40,3 +40,4 @@ Supabase:
 - Jika Supabase tidak dikonfigurasi, backend masih menerima `AZURE_SQL_CONNECTION_STRING` sebagai fallback.
 - Riwayat meal disimpan ke tabel `public.meal_history` dan bisa dibaca lewat endpoint `GET /history/meals`.
 - Schema Supabase ada di `supabase_schema.sql`.
+- Di Supabase Dashboard, buka **SQL Editor** > **New query**, tempel `supabase_schema.sql`, lalu klik **Run** sekali untuk membuat tabel.
