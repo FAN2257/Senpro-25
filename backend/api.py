@@ -225,7 +225,17 @@ async def predict_food(
         raise HTTPException(status_code=400, detail="File yang diupload bukan format gambar yang valid.")
 
     # Menjalankan inferensi model AI dengan parameter yang bisa dituning
-    results = model.predict(image, conf=detect_conf, iou=iou, max_det=max_det, multi_label=multi_label, verbose=False)
+    try:
+        # Ultralytics version in App Service does not accept multi_label here.
+        # Keep the query parameter for API compatibility, but do not pass it to predict().
+        results = model.predict(image, conf=detect_conf, iou=iou, max_det=max_det, verbose=False)
+    except Exception as e:
+        # Log full traceback to stdout so App Service log stream captures it
+        import traceback as _tb
+        tb = _tb.format_exc()
+        print(f"[ERROR] Exception during model.predict: {e}\n{tb}")
+        # Return a sanitized error to the client while preserving helpful message
+        raise HTTPException(status_code=500, detail=f"Internal server error during prediction: {str(e)}")
 
     response_data = {"status": "success", "detections": [], "other_candidates": [], "meta": {"detect_conf": detect_conf, "primary_conf": primary_conf, "iou": iou, "max_det": max_det, "multi_label": multi_label}}
 
