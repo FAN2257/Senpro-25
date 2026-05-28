@@ -42,7 +42,7 @@ export function AuthPage() {
       if (error || !data.user) {
         if (!error) {
           await client.auth.signOut();
-        } else {
+        } else if (!/auth session missing/i.test(error.message)) {
           toast.error(error.message);
         }
 
