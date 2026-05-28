@@ -107,6 +107,7 @@ export async function getCurrentUserProfile() {
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
+    await supabase.auth.signOut();
     return null;
   }
 

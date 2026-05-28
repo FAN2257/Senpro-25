@@ -33,24 +33,38 @@ export function AuthPage() {
     }
 
     const syncSession = async () => {
-      const { data, error } = await client.auth.getSession();
+      const { data, error } = await client.auth.getUser();
 
       if (!isMounted) {
         return;
       }
 
-      if (error) {
-        toast.error(error.message);
+      if (error || !data.user) {
+        if (!error) {
+          await client.auth.signOut();
+        } else {
+          toast.error(error.message);
+        }
+
+        setSessionEmail(null);
+        setSessionReady(true);
+        return;
       }
 
-      setSessionEmail(data.session?.user.email ?? null);
+      setSessionEmail(data.user.email ?? null);
       setSessionReady(true);
     };
 
     syncSession();
 
     const { data: authListener } = client.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      setSessionEmail(session?.user.email ?? null);
+      if (!session?.user?.email) {
+        setSessionEmail(null);
+        setSessionReady(true);
+        return;
+      }
+
+      setSessionEmail(session.user.email);
       setSessionReady(true);
     });
 
