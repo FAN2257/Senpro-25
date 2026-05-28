@@ -150,7 +150,7 @@ export function ScanPage() {
             ? 'Model siap dipakai'
             : status.load_error
               ? `Model belum aktif di environment App Service: ${status.load_error}`
-              : 'Model masih warming up'
+              : 'Model belum aktif di environment App Service'
         );
 
         if (status.model_loaded || status.load_error) {
@@ -201,7 +201,7 @@ export function ScanPage() {
     }
 
     if (!modelReady) {
-      const message = 'Model masih memuat, tunggu sebentar lalu coba lagi.';
+      const message = modelStatusText || 'Model belum aktif di environment App Service.';
       setError(message);
       toast.error(message);
       return;
@@ -383,7 +383,7 @@ export function ScanPage() {
             <p className="field-help">Di ponsel, pilih galeri atau kamera. Di desktop, Anda bisa pilih file foto.</p>
           </div>
           <div className="form-actions" style={{ marginTop: 18 }}>
-            <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={loading || !modelReady}>
+            <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={loading}>
               <ScanSearch size={16} /> {loading ? 'Memproses...' : 'Analisis Gambar'}
             </button>
             <button className="btn btn-secondary" type="button" onClick={reset}>
