@@ -45,6 +45,7 @@ Notes:
 - Ensure `backend/requirements.txt` contains `opencv-python-headless` (already included).
 - Enable build during deployment by having `.deployment` with `SCM_DO_BUILD_DURING_DEPLOYMENT=true` (present).
 - Check deployment logs (Kudu/Oryx) to verify that `opencv-python-headless` and `ultralytics` installed from wheels (no compilation errors).
+- Set the App Service **Startup Command** to `bash startup.sh` so the app can remove `opencv-python` and keep the headless wheel before `uvicorn` starts.
 
 4) Post-deploy checks
 - Call `GET /api/model-status` and check `model_loaded` and `load_error` fields.

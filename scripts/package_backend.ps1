@@ -43,7 +43,8 @@ $deployFiles = @(
 	'db.py',
 	'nutrition_mapping.json',
 	'README.md',
-	'requirements.txt'
+	'requirements.txt',
+	'startup.sh'
 )
 
 foreach ($file in $deployFiles) {
