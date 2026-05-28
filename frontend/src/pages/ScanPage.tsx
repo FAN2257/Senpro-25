@@ -137,6 +137,7 @@ export function ScanPage() {
 
   useEffect(() => {
     let mounted = true;
+    let intervalId = 0;
 
     const refreshModelStatus = async () => {
       try {
@@ -148,9 +149,13 @@ export function ScanPage() {
           status.model_loaded
             ? 'Model siap dipakai'
             : status.load_error
-              ? `Model belum siap: ${status.load_error}`
+              ? `Model belum aktif di environment App Service: ${status.load_error}`
               : 'Model masih warming up'
         );
+
+        if (status.model_loaded || status.load_error) {
+          window.clearInterval(intervalId);
+        }
       } catch {
         if (!mounted) return;
         setModelReady(false);
@@ -159,7 +164,7 @@ export function ScanPage() {
     };
 
     void refreshModelStatus();
-    const intervalId = window.setInterval(refreshModelStatus, 5000);
+    intervalId = window.setInterval(refreshModelStatus, 5000);
 
     return () => {
       mounted = false;
@@ -335,9 +340,9 @@ export function ScanPage() {
           <h3 className="section-title">Scan makanan</h3>
           <p className="section-description">Unggah foto makanan, lalu lihat ringkasan hasilnya dengan cepat dan jelas.</p>
         </div>
-        <span className="chip">
-          <Sparkles size={14} /> {modelReady ? 'Siap dipakai' : 'Memuat model'}
-        </span>
+          <span className="chip">
+            <Sparkles size={14} /> {modelReady ? 'Siap dipakai' : 'Model belum aktif'}
+          </span>
       </div>
       <div className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
         {modelStatusText}

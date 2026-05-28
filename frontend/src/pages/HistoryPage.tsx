@@ -139,7 +139,7 @@ export function HistoryPage() {
         {todayScanHistory.length > 0 ? (
           <div className="grid-3" style={{ marginTop: 16 }}>
             <div className="empty-state">
-              <strong>Kalori total</strong>
+                <h4 className="card-title">Riwayat Tersimpan</h4>
               <div className="metric-value" style={{ marginTop: 8 }}>{formatNutrition('Energy', todayNutrition.Energy)}</div>
               <div className="muted" style={{ marginTop: 6 }}>Akumulasi seluruh scan hari ini.</div>
             </div>
