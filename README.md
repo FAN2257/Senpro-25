@@ -2,97 +2,119 @@
 
 Snap. Track. Eat Well.
 
-Anggota 1: Fadel Aulia Naldi - 23/519144/TK/57236
+SnapEats adalah Progressive Web App untuk mengenali makanan dari foto, menghitung nutrisi, dan menyimpan riwayat makan ke cloud. Aplikasi ini dibangun untuk membantu pengguna memantau asupan harian secara cepat tanpa pencatatan manual yang melelahkan.
 
-Anggota 2: Lalu Kevin Proudy Handal - 23/515833/TK/56745
+## Latar Belakang
 
-Anggota 3: Mirsad Alganawi Azma - 23/522716/TK/57737
+Pencatatan makanan secara manual cenderung lambat, tidak konsisten, dan sering ditinggalkan. Untuk pengguna yang ingin menjaga pola makan, cara ini membuat pemantauan kalori dan nutrisi menjadi sulit. SnapEats hadir sebagai solusi yang menggabungkan computer vision, backend FastAPI, dan penyimpanan cloud agar hasil scan bisa dipakai kembali sebagai riwayat yang rapi.
 
-Anggota 4: Bintang Mahardika Shandy - 23/517449/TK/56919
+## Tujuan
 
-## Development Setup
+Proyek ini bertujuan untuk:
 
-Workspace ini dikonfigurasi agar backend dan frontend otomatis berjalan ketika folder ini dibuka di VS Code.
+1. Mengubah foto makanan menjadi ringkasan nutrisi yang mudah dibaca.
+2. Menyimpan hasil scan ke riwayat agar bisa ditinjau ulang.
+3. Menyediakan pengalaman web yang cepat, mobile-friendly, dan tetap nyaman dipakai di desktop.
 
-### Otomatis saat buka VS Code
+## Gambaran Solusi
 
-- Task auto-start ada di [.vscode/tasks.json](.vscode/tasks.json).
-- Backend dijalankan dari `backend/.venv` dengan `uvicorn api:app --host 0.0.0.0 --port 8000 --reload`.
-- Frontend dijalankan dari `frontend`; skripnya akan install dependency hanya jika `node_modules` belum ada, lalu menjalankan `npm run dev`.
+```mermaid
+flowchart LR
+  A[Pengguna] --> B[Frontend PWA]
+  B --> C[FastAPI Backend]
+  C --> D[Model YOLO / Nutrisi]
+  C --> E[Supabase / History Storage]
+  C --> F[Azure SQL fallback]
+```
 
-### Manual fallback
+### Komponen Utama
 
-Kalau perlu menjalankan manual, pakai dua script ini:
+- Frontend PWA: antarmuka scan, riwayat, dashboard, dan autentikasi.
+- Backend FastAPI: API prediksi, kalkulasi nutrisi, dan penyimpanan riwayat.
+- Supabase: penyimpanan utama untuk autentikasi dan history.
+- Azure SQL: fallback backend untuk riwayat bila diperlukan.
 
-- `scripts/start-backend.cmd`
-- `scripts/start-frontend.cmd`
+## Fitur Utama
 
-Catatan:
-- `scripts/start-backend.cmd` akan membuat `.venv` jika belum ada, lalu memasang dependency backend dari `requirements.txt`.
-- `scripts/start-frontend.cmd` akan memasang dependency frontend hanya saat `node_modules` belum ada, lalu menjalankan Vite dev server.
+- Scan foto makanan dari galeri atau kamera.
+- Deteksi makanan otomatis dengan model AI.
+- Quick analytic nutrisi dengan basis porsi yang bisa diubah.
+- Simpan hasil scan ke riwayat cloud.
+- Riwayat makan yang bisa dikelompokkan per tanggal.
+- Hapus riwayat dengan konfirmasi dan pop-up blur.
+- Dashboard autentikasi yang mendukung keluar akun.
+- Input menu manual untuk perhitungan nutrisi tanpa foto.
 
-### Langkah run dari clone baru
+## Anggota Tim
 
-Kalau baru clone repo di device lain, urutan yang paling aman adalah:
+| Nama | NIM |
+|------|-----|
+| Fadel Aulia Naldi | 23/519144/TK/57236 |
+| Lalu Kevin Proudy Handal | 23/515833/TK/56745 |
+| Mirsad Alganawi Azma | 23/522716/TK/57737 |
+| Bintang Mahardika Shandy | 23/517449/TK/56919 |
+
+## Struktur Repo
+
+```text
+backend/        FastAPI, model, dan helper database
+frontend/       PWA berbasis Vite + React
+scripts/        Helper start, build, dan packaging
+tests/          Backend test dan e2e test
+.github/        Workflow deployment
+```
+
+## Prasyarat
+
+- Python 3.11+
+- Node.js 18+
+- npm
+- Supabase project untuk auth dan history
+
+## Menjalankan Lokal
+
+### Backend
 
 ```powershell
 cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-
-cd ..\frontend
-npm install
+python -m uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Setelah itu jalankan salah satu opsi berikut:
+### Frontend
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+### Helper script
 
 ```powershell
 scripts\start-backend.cmd
 scripts\start-frontend.cmd
 ```
 
-Atau jalankan lewat task VS Code yang sudah disediakan.
+## Environment Variables
 
-### Environment frontend
-
-Pastikan `frontend/.env.local` berisi:
+### Frontend
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
-VITE_SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
-VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_OR_PUBLISHABLE_KEY>
+VITE_SUPABASE_URL=https://<YOUR-PROJECT>.supabase.co
+VITE_SUPABASE_ANON_KEY=<YOUR_SUPABASE_ANON_KEY>
 ```
 
-Jika Anda memakai key publishable dari dashboard Supabase, isi `VITE_SUPABASE_PUBLISHABLE_KEY` sebagai gantinya:
+Jika Anda memakai publishable key dari Supabase, gunakan variabel publishable yang sesuai di frontend.
+
+### Backend
 
 ```env
-VITE_SUPABASE_PUBLISHABLE_KEY=<SUPABASE_PUBLISHABLE_KEY>
-```
-
-Panduan tes akun Supabase ada di [docs/supabase-auth-testing.md](docs/supabase-auth-testing.md).
-
-Supaya deployment berjalan penuh, siapkan secrets berikut di GitHub Actions:
-
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `AZURE_WEBAPP_PUBLISH_PROFILE`
-
-Di Supabase Dashboard, pastikan juga **Authentication** > **URL Configuration** berisi:
-
-- **Site URL**: `https://snapeats-backend.azurewebsites.net`
-- **Redirect URLs**: tambahkan `https://snapeats-backend.azurewebsites.net/auth`
-
-Kalau frontend Anda nanti dipindah ke domain sendiri, tambahkan domain itu juga ke daftar redirect.
-
-### Environment backend untuk Supabase
-
-Di App Service backend, set application settings berikut:
-
-```env
-SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
+SUPABASE_URL=https://<YOUR-PROJECT>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<YOUR_SERVICE_ROLE_KEY>
 PORT=8000
 TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 MPLBACKEND=Agg
@@ -102,134 +124,40 @@ MPLCONFIGDIR=/tmp/matplotlib
 PYTHONUNBUFFERED=1
 ```
 
-Backend sekarang memprioritaskan Supabase sebagai penyimpanan riwayat. `SUPABASE_SERVICE_ROLE_KEY` hanya untuk backend dan jangan pernah dipasang di frontend.
+## Konfigurasi Supabase
 
-Frontend tetap memakai key publik/publishable dari Supabase:
+1. Buat project Supabase.
+2. Ambil `Project URL`, `anon key`, dan `service_role key` dari dashboard.
+3. Jalankan schema riwayat pada tabel `meal_history` melalui SQL Editor.
+4. Tambahkan redirect URL aplikasi ke konfigurasi Auth Supabase.
 
-```env
-VITE_SUPABASE_URL=https://pxgikjslgycxgbehjrop.supabase.co
-VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_OR_PUBLISHABLE_KEY>
-```
+## Alur Penggunaan
 
-Schema riwayat ada di [backend/supabase_schema.sql](backend/supabase_schema.sql). Buka **SQL Editor** di Supabase, klik **New query**, lalu jalankan isi file itu sekali untuk membuat tabel `meal_history`.
+1. Masuk atau daftar akun.
+2. Buka halaman scan.
+3. Upload foto makanan.
+4. Tinjau quick analytic dan pilih kandidat tambahan bila perlu.
+5. Simpan hasil scan ke riwayat.
+6. Buka halaman riwayat untuk melihat data per tanggal atau menghapus entri tertentu.
 
-Jika Anda tetap ingin memakai Azure SQL sebagai fallback, backend masih mendukung `AZURE_SQL_CONNECTION_STRING`, tetapi Supabase sekarang adalah jalur utama.
-
-### Deploy ke Azure App Service
-
-Panduan ini memakai 2 App Service: satu untuk backend FastAPI dan satu untuk frontend Vite.
-
-1. Siapkan Supabase project
-
-1. Buka [Supabase Dashboard](https://supabase.com/dashboard).
-2. Klik **New project**.
-3. Pilih organization.
-4. Isi **Project name**, **Database password**, dan region.
-5. Tunggu provisioning selesai.
-6. Buka **Settings** > **API** dan salin `Project URL`, `anon public key`, serta `service_role key`.
-7. Buka **SQL Editor** > **New query**.
-8. Tempel isi [backend/supabase_schema.sql](backend/supabase_schema.sql) lalu klik **Run**.
-
-#### 2) Buat App Service untuk backend
-
-1. Di portal Azure, klik **Create a resource**.
-2. Cari **Web App**.
-3. Klik **Create**.
-4. Pada tab **Basics**, isi:
-	- **Subscription**: subscription Anda.
-	- **Resource group**: resource group yang sama.
-	- **Name**: misalnya `snapeats-backend`.
-	- **Publish**: `Code`.
-	- **Runtime stack**: `Python 3.11` atau versi Python yang tersedia.
-	- **Operating System**: `Linux`.
-	- **Region**: pilih region yang dekat dengan SQL Database.
-5. Klik **Review + create** lalu **Create**.
-9. Setelah App Service siap, buka resource `snapeats-backend`.
-7. Buka **Configuration** > **Application settings**.
-8. Klik **New application setting**.
-9. Tambahkan application settings berikut:
-	- `SUPABASE_URL`
-	- `SUPABASE_SERVICE_ROLE_KEY`
-	- `PORT` = `8000`
-	- `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD` = `1`
-	- `MPLBACKEND` = `Agg`
-	- `QT_QPA_PLATFORM` = `offscreen`
-	- `DISPLAY` = kosong
-	- `MPLCONFIGDIR` = `/tmp/matplotlib`
-	- `PYTHONUNBUFFERED` = `1`
-10. Klik **Save**.
-11. Buka **Configuration** > **General settings**.
-12. Pada bagian **Startup Command**, isi:
-
-```bash
-python -m uvicorn api:app --host 0.0.0.0 --port 8000
-```
-
-13. Klik **Save**.
-14. Buka **Deployment Center**.
-15. Pilih cara deploy yang Anda pakai, misalnya GitHub Actions, Local Git, atau upload package.
-16. Deploy folder `backend/` ke App Service ini.
-17. Setelah deploy selesai, buka **Log stream** atau halaman **Overview** untuk melihat URL backend.
-18. Coba buka `https://<nama-backend>.azurewebsites.net/` dan pastikan endpoint root merespons.
-
-#### 3) Buat App Service untuk frontend
-
-1. Klik **Create a resource** lagi.
-2. Cari **Web App**.
-3. Klik **Create**.
-4. Pada tab **Basics**, isi:
-	- **Name**: misalnya `snapeats-frontend`.
-	- **Publish**: `Code`.
-	- **Runtime stack**: pilih Node.js jika tersedia.
-	- **Operating System**: `Linux`.
-	- **Region**: gunakan region yang sama jika memungkinkan.
-5. Klik **Review + create** lalu **Create**.
-6. Setelah App Service siap, buka resource `snapeats-frontend`.
-7. Buka **Configuration** > **Application settings**.
-8. Tambahkan `VITE_API_BASE_URL` dengan isi URL backend App Service, misalnya:
-
-```text
-https://snapeats-backend.azurewebsites.net
-```
-
-9. Klik **Save**.
-10. Di lokal, buka folder `frontend/` lalu jalankan:
+## Testing
 
 ```powershell
+cd frontend
+npm run typecheck
 npm run build
+
+cd ..
+python -m compileall backend
 ```
 
-11. Deploy isi folder `frontend/dist` ke App Service frontend.
-12. Setelah deploy selesai, buka URL frontend dan pastikan halaman utama muncul.
-13. Coba halaman **Scan** dan **Riwayat** untuk memastikan frontend terhubung ke backend.
+## Deployment
 
-#### 4) Verifikasi end-to-end
+1. Jalankan `scripts/package_backend.ps1` untuk membuat `backend.zip`.
+2. Deploy backend ke Azure App Service.
+3. Deploy `frontend/dist` atau app frontend ke target hosting yang Anda gunakan.
+4. Pastikan environment production mengarah ke backend dan Supabase yang benar.
 
-1. Buka frontend App Service di browser.
-2. Masuk ke halaman **Scan**.
-3. Upload foto makanan lalu jalankan analisis.
-4. Buka halaman **Riwayat**.
-5. Jalankan perhitungan nutrisi.
-6. Pastikan data baru tampil di bagian **Riwayat tersimpan di Supabase**.
+## Kesimpulan
 
-#### 5) Hal yang sering terlupa
-
-1. Jangan biarkan `VITE_API_BASE_URL` tetap mengarah ke `localhost`.
-2. Pastikan `allow_origins` di backend disesuaikan ke domain production saat aplikasi sudah online.
-3. Pastikan `SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY` sudah benar di App Service backend.
-4. Jika deploy frontend gagal karena routing SPA, pastikan App Service atau static server mengarahkan request non-file ke `index.html`.
-
-Jika Anda ingin satu App Service saja, backend FastAPI juga bisa menyajikan hasil build frontend. Untuk repo ini, dua App Service tetap lebih mudah dipisah dan dioperasikan.
-
-### Cek cepat
-
-```powershell
-curl http://localhost:8000/
-curl http://localhost:8000/foods
-```
-
-Untuk frontend, buka alamat Vite yang muncul di terminal, biasanya:
-
-```text
-http://localhost:5173
-```
+SnapEats menyatukan deteksi makanan berbasis AI, penyimpanan riwayat cloud, dan antarmuka PWA yang ringan agar pencatatan nutrisi menjadi lebih cepat, lebih jelas, dan lebih mudah dipakai sehari-hari.
