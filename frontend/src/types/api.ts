@@ -99,3 +99,9 @@ export interface SaveMealHistoryResponse {
     created_at: string;
   };
 }
+
+export interface DeleteMealHistoryResponse {
+  status: string;
+  message: string;
+  id: string;
+}

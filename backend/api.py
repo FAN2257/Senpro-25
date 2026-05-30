@@ -31,7 +31,7 @@ from pydantic import ConfigDict
 from PIL import Image
 import uvicorn
 
-from db import get_database_backend_name, get_database_connection_configured, initialize_database, is_database_ready, list_meal_history, save_meal_history
+from db import delete_meal_history, get_database_backend_name, get_database_connection_configured, initialize_database, is_database_ready, list_meal_history, save_meal_history
 
 # PyTorch 2.6 changes torch.load() to weights_only=True by default, which can
 # block older Ultralytics checkpoints during startup on Azure App Service.
@@ -401,6 +401,22 @@ def get_meal_history(limit: int = Query(default=10, ge=1, le=100)):
         "status": "success",
         "total_items": len(records),
         "items": records
+    }
+
+
+@app.delete(f"{API_PREFIX}/history/meals/{{entry_id}}")
+def delete_meal_history_entry(entry_id: str):
+    if not is_database_ready():
+        raise HTTPException(status_code=503, detail="Database belum dikonfigurasi.")
+
+    deleted = delete_meal_history(entry_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan.")
+
+    return {
+        "status": "success",
+        "message": "Riwayat makan dihapus.",
+        "id": entry_id,
     }
 
 

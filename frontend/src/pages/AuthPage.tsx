@@ -74,12 +74,6 @@ export function AuthPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (sessionReady && sessionEmail) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate, sessionEmail, sessionReady]);
-
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -244,7 +238,7 @@ export function AuthPage() {
                   Lanjut ke beranda
                 </button>
                 <button className="btn btn-secondary" type="button" onClick={handleSignOut} disabled={loading}>
-                  Keluar
+                  Keluar akun
                 </button>
               </div>
             </div>

@@ -2,7 +2,7 @@
 import { CameraOff, Clock3, ImagePlus, ScanSearch, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getCurrentUserEmail, getModelStatus, predictFood, saveMealHistory } from '../lib/api';
-import type { DetectionItem } from '../types/api';
+import type { DetectionItem, SaveMealHistoryPayload } from '../types/api';
 import { formatNutrition } from '../lib/nutrition';
 import { useScanStore } from '../store/scanStore';
 import { MotionSection } from '../components/MotionSection';
@@ -73,6 +73,7 @@ export function ScanPage() {
   const [otherCandidates, setOtherCandidates] = useState<DetectionItem[]>([]);
   const [selectedOtherKeys, setSelectedOtherKeys] = useState<Record<string, boolean>>({});
   const [portionGram, setPortionGram] = useState(DEFAULT_PORTION_GRAM);
+  const [historySaving, setHistorySaving] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const {
@@ -215,29 +216,10 @@ export function ScanPage() {
       setResult(response);
       pushHistory(file.name, response);
 
-      const selectedOtherCandidates = (response.other_candidates ?? []).filter((cand) => selectedOtherKeys[`${cand.food_name}-${cand.confidence}`]);
-      const combinedDetections = [...response.detections, ...selectedOtherCandidates];
-
-      try {
-        const userEmail = await getCurrentUserEmail();
-        const summary = buildScanSummary(combinedDetections);
-        const scaledTotalNutrition = scaleNutrition(summary.totalNutrition, portionGram);
-        const mealLabel = summary.foodItems.length > 0 ? `Scan ${summary.foodItems.map((item) => item.food_name).join(', ')}` : `Scan ${new Date().toLocaleString('id-ID')}`;
-
-        await saveMealHistory({
-          meal_label: mealLabel,
-          user_email: userEmail,
-          food_items: summary.foodItems,
-          total_nutrition: scaledTotalNutrition,
-          details: combinedDetections,
-          source: 'scan'
-        });
-      } catch {
-        // Scan tetap tampil walau penyimpanan riwayat server gagal.
-      }
+      const combinedDetections = [...response.detections, ...(response.other_candidates ?? [])];
 
       if (combinedDetections.length > 0) {
-        toast.success(`${combinedDetections.length} makanan ditemukan dan disimpan ke tracker.`);
+        toast.success(`${combinedDetections.length} makanan ditemukan. Tinjau quick analytic lalu simpan bila sudah sesuai.`);
       } else {
         toast('Belum ada makanan yang terlihat jelas, coba foto yang lebih terang.', { icon: 'i' });
       }
@@ -305,8 +287,10 @@ export function ScanPage() {
     setSelectedOtherKeys((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const saveWithSelectedOthers = async () => {
-    if (!scanInsights) return;
+  const buildMealHistoryPayload = async (): Promise<SaveMealHistoryPayload | null> => {
+    if (!scanInsights) {
+      return null;
+    }
 
     const selected = otherCandidates.filter((c) => selectedOtherKeys[`${c.food_name}-${c.confidence}`]);
     const combinedFoodItems = [
@@ -315,21 +299,57 @@ export function ScanPage() {
     ];
 
     const totalNutrition = displayNutrition ?? scaleNutrition(scanInsights.totalNutrition, portionGram);
+    const selectedCandidateDetails = otherCandidates.filter((cand: DetectionItem) => selectedOtherKeys[`${cand.food_name}-${cand.confidence}`]);
+    const mealLabel = scanInsights.foodItems.length > 0
+      ? `Scan ${scanInsights.foodItems.map((item) => item.food_name).join(', ')}`
+      : `Scan ${new Date().toLocaleString('id-ID')}`;
+
+    return {
+      meal_label: mealLabel,
+      user_email: await getCurrentUserEmail(),
+      food_items: combinedFoodItems,
+      total_nutrition: totalNutrition,
+      details: [...(result?.detections ?? []), ...selectedCandidateDetails],
+      source: 'scan',
+      metadata: {
+        portion_gram: portionGram,
+        selected_candidates: selectedCandidateDetails.map((candidate) => ({
+          food_name: candidate.food_name,
+          confidence: candidate.confidence
+        }))
+      }
+    };
+  };
+
+  const handleSaveCurrentScan = async () => {
+    if (!scanInsights) {
+      toast.error('Belum ada hasil scan yang bisa disimpan.');
+      return;
+    }
+
+    const summaryText = scanInsights.foodItems.map((item) => item.food_name).join(', ') || 'hasil scan';
+    const confirmed = window.confirm(`Simpan ${summaryText} dengan porsi ${portionGram} g ke riwayat tersimpan?`);
+
+    if (!confirmed) {
+      toast('Penyimpanan dibatalkan.', { icon: 'i' });
+      return;
+    }
+
+    setHistorySaving(true);
 
     try {
-      const userEmail = await getCurrentUserEmail();
-      const selectedCandidateDetails = otherCandidates.filter((cand: DetectionItem) => selectedOtherKeys[`${cand.food_name}-${cand.confidence}`]);
-      await saveMealHistory({
-        meal_label: `Scan ${new Date().toLocaleString('id-ID')}`,
-        user_email: userEmail,
-        food_items: combinedFoodItems,
-        total_nutrition: totalNutrition,
-        details: [...(result?.detections ?? []), ...selectedCandidateDetails],
-        source: 'scan'
-      });
-      toast.success('Hasil tersimpan dengan kandidat tambahan.');
+      const payload = await buildMealHistoryPayload();
+      if (!payload) {
+        toast.error('Belum ada hasil scan yang bisa disimpan.');
+        return;
+      }
+
+      await saveMealHistory(payload);
+      toast.success('Hasil scan disimpan ke riwayat.');
     } catch {
       toast.error('Penyimpanan riwayat gagal.');
+    } finally {
+      setHistorySaving(false);
     }
   };
 
@@ -470,6 +490,11 @@ export function ScanPage() {
               <p className="footer-note" style={{ marginTop: 8 }}>
                 Quick analytic ini menampilkan makro dan mikro pada basis {portionGram} g, sementara detail item tetap mengacu ke referensi 100 g.
               </p>
+              <div className="form-actions" style={{ marginTop: 12 }}>
+                <button className="btn btn-primary" type="button" onClick={() => void handleSaveCurrentScan()} disabled={historySaving}>
+                  {historySaving ? 'Menyimpan...' : 'Simpan ke riwayat'}
+                </button>
+              </div>
             </div>
           ) : null}
 
@@ -498,9 +523,9 @@ export function ScanPage() {
                   );
                 })}
               </div>
-              <div className="form-actions" style={{ marginTop: 12 }}>
-                <button className="btn btn-primary" type="button" onClick={saveWithSelectedOthers}>Include selected & Save</button>
-              </div>
+              <p className="footer-note" style={{ marginTop: 12 }}>
+                Centang kandidat yang ingin ikut tersimpan, lalu gunakan tombol simpan di quick analytic di atas.
+              </p>
             </div>
           ) : null}
           {result?.detections?.length ? result.detections.map(renderDetection) : (
@@ -515,7 +540,7 @@ export function ScanPage() {
                 <span className="chip">Tracker harian</span>
               </div>
               <p className="muted" style={{ marginTop: 8 }}>
-                Hasil scan sudah tersimpan ke riwayat. Anda bisa buka halaman riwayat untuk melihat akumulasi makanan hari ini dan total nutrisinya.
+                Hasil scan siap disimpan ke riwayat setelah Anda meninjau porsi, kandidat lain, dan ringkasan quick analytic.
               </p>
             </div>
           ) : null}

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { LayoutDashboard, ListChecks, Shield, Zap } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Zap } from 'lucide-react';
 import { AppShell } from './components/AppShell';
 import { DashboardPage } from './pages/DashboardPage';
 import { FeaturesPage } from './pages/FeaturesPage';
@@ -12,8 +12,7 @@ import { AuthPage } from './pages/AuthPage';
 const navItems = [
   { to: '/', label: 'Beranda', icon: LayoutDashboard },
   { to: '/features', label: 'Fitur', icon: Zap },
-  { to: '/history', label: 'Riwayat', icon: ListChecks },
-  { to: '/auth', label: 'Masuk / Daftar', icon: Shield }
+  { to: '/history', label: 'Riwayat', icon: ListChecks }
 ];
 
 export function App() {

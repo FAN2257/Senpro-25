@@ -265,6 +265,38 @@ def save_meal_history(payload: dict[str, Any]) -> dict[str, Any] | None:
         return None
 
 
+def delete_meal_history(entry_id: str) -> bool:
+    supabase_client = _build_supabase_client()
+    if supabase_client is not None:
+        try:
+            result = supabase_client.table("meal_history").delete().eq("id", entry_id).execute()
+            deleted_rows = getattr(result, "data", None) or []
+            return bool(deleted_rows)
+        except Exception as exc:
+            print(f"[WARNING] Failed to delete meal history from Supabase: {exc}")
+            return False
+
+    engine = get_engine()
+    if engine is None:
+        return False
+
+    try:
+        with engine.begin() as connection:
+            result = connection.execute(
+                text(
+                    """
+                    DELETE FROM dbo.meal_history
+                    WHERE id = :id
+                    """
+                ),
+                {"id": entry_id},
+            )
+            return bool(result.rowcount and result.rowcount > 0)
+    except SQLAlchemyError as exc:
+        print(f"[WARNING] Failed to delete meal history: {exc}")
+        return False
+
+
 def list_meal_history(limit: int = 10) -> list[dict[str, Any]]:
     supabase_client = _build_supabase_client()
     if supabase_client is not None:

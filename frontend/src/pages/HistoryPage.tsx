@@ -1,18 +1,81 @@
-import { useEffect, useMemo, useState } from 'react';
-import { calculateMeal, getMealHistory, saveMealHistory } from '../lib/api';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { RefreshCw, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { calculateMeal, deleteMealHistory, getMealHistory, saveMealHistory } from '../lib/api';
 import { formatNutrition } from '../lib/nutrition';
 import type { MealCalculationResponse, MealHistoryEntry, MealItem } from '../types/api';
 
-const starterItems: MealItem[] = [
-  { food_name: 'Nasi Padang', quantity_gram: 150 },
-  { food_name: 'Ayam Goreng', quantity_gram: 100 }
-];
+const starterItems: MealItem[] = [];
+
+type HistoryGroup = {
+  key: string;
+  label: string;
+  entries: MealHistoryEntry[];
+};
+
+function getLocalDateKey(dateInput: string) {
+  const date = new Date(dateInput);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getLocalDateKeyFromDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 function isSameLocalDay(left: string, right: Date) {
   const leftDate = new Date(left);
   return leftDate.getFullYear() === right.getFullYear()
     && leftDate.getMonth() === right.getMonth()
     && leftDate.getDate() === right.getDate();
+}
+
+function formatHistoryGroupLabel(dateKey: string, today: Date) {
+  const todayKey = getLocalDateKeyFromDate(today);
+  const groupDate = new Date(`${dateKey}T00:00:00`);
+
+  if (dateKey === todayKey) {
+    return 'Hari ini';
+  }
+
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const yesterdayKey = getLocalDateKeyFromDate(yesterday);
+
+  if (dateKey === yesterdayKey) {
+    return 'Kemarin';
+  }
+
+  return new Intl.DateTimeFormat('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(groupDate);
+}
+
+function groupHistoryEntries(entries: MealHistoryEntry[], today: Date): HistoryGroup[] {
+  const grouped = new Map<string, MealHistoryEntry[]>();
+
+  for (const entry of entries) {
+    const key = getLocalDateKey(entry.created_at);
+    const bucket = grouped.get(key) ?? [];
+    bucket.push(entry);
+    grouped.set(key, bucket);
+  }
+
+  return Array.from(grouped.entries()).map(([key, groupedEntries]) => ({
+    key,
+    label: formatHistoryGroupLabel(key, today),
+    entries: groupedEntries
+  }));
 }
 
 function aggregateNutrition(entries: MealHistoryEntry[]) {
@@ -37,6 +100,7 @@ export function HistoryPage() {
   const [savedHistory, setSavedHistory] = useState<MealHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const totalItems = useMemo(() => items.length, [items]);
   const today = useMemo(() => new Date(), []);
@@ -44,6 +108,7 @@ export function HistoryPage() {
   const todayScanHistory = useMemo(() => todayHistory.filter((entry) => entry.source === 'scan'), [todayHistory]);
   const todayNutrition = useMemo(() => aggregateNutrition(todayScanHistory), [todayScanHistory]);
   const latestSavedEntry = useMemo(() => savedHistory[0] ?? null, [savedHistory]);
+  const groupedHistory = useMemo(() => groupHistoryEntries(savedHistory, today), [savedHistory, today]);
 
   const latestNutrition = useMemo(() => {
     if (!latestSavedEntry) {
@@ -62,31 +127,46 @@ export function HistoryPage() {
     };
   }, [latestSavedEntry]);
 
-  useEffect(() => {
-    let isActive = true;
+  const refreshHistory = async (showToast = false) => {
+    setHistoryLoading(true);
 
-    const loadHistory = async () => {
-      setHistoryLoading(true);
-      try {
-        const response = await getMealHistory(50);
-        if (isActive) {
-          setSavedHistory(response.items);
-        }
-      } catch {
-        if (isActive) {
-          setSavedHistory([]);
-        }
-      } finally {
-        if (isActive) {
-          setHistoryLoading(false);
-        }
+    try {
+      const response = await getMealHistory(50);
+      setSavedHistory(response.items);
+
+      if (showToast) {
+        toast.success('Riwayat diperbarui.');
+      }
+    } catch {
+      setSavedHistory([]);
+
+      if (showToast) {
+        toast.error('Riwayat gagal dimuat.');
+      }
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshHistory();
+
+    const handleFocus = () => {
+      void refreshHistory();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshHistory();
       }
     };
 
-    loadHistory();
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      isActive = false;
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -97,7 +177,16 @@ export function HistoryPage() {
     setQuantity(100);
   };
 
+  const removeItem = (index: number) => {
+    setItems((current) => current.filter((_, currentIndex) => currentIndex !== index));
+  };
+
   const runCalculation = async () => {
+    if (items.length === 0) {
+      toast.error('Tambahkan minimal satu menu sebelum menghitung.');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await calculateMeal({ foods: items });
@@ -112,13 +201,35 @@ export function HistoryPage() {
           source: 'history-page'
         });
 
-        const refreshed = await getMealHistory(50);
-        setSavedHistory(refreshed.items);
+        await refreshHistory();
+        toast.success('Perhitungan selesai dan riwayat tersimpan.');
       } catch {
         // Riwayat tetap bisa dihitung walau penyimpanan gagal.
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteHistoryEntry = async (entry: MealHistoryEntry) => {
+    const confirmed = window.confirm(
+      `Hapus riwayat "${entry.meal_label ?? 'riwayat ini'}"? Tindakan ini tidak bisa dibatalkan.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(entry.id);
+
+    try {
+      await deleteMealHistory(entry.id);
+      toast.success('Riwayat scan dihapus.');
+      await refreshHistory();
+    } catch {
+      toast.error('Riwayat gagal dihapus.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -139,9 +250,9 @@ export function HistoryPage() {
         {todayScanHistory.length > 0 ? (
           <div className="grid-3" style={{ marginTop: 16 }}>
             <div className="empty-state">
-                <h4 className="card-title">Riwayat Tersimpan</h4>
+              <h4 className="card-title">Ringkasan scan hari ini</h4>
               <div className="metric-value" style={{ marginTop: 8 }}>{formatNutrition('Energy', todayNutrition.Energy)}</div>
-              <div className="muted" style={{ marginTop: 6 }}>Akumulasi seluruh scan hari ini.</div>
+              <div className="muted" style={{ marginTop: 6 }}>Akumulasi seluruh hasil scan yang tersimpan hari ini.</div>
             </div>
             <div className="empty-state">
               <strong>Makro utama</strong>
@@ -203,14 +314,25 @@ export function HistoryPage() {
           </div>
 
           <div className="footer-note">Total item yang Anda simpan: {totalItems}</div>
-          <div className="list" style={{ marginTop: 12 }}>
-            {items.map((item, index) => (
-              <div className="list-item" key={`${item.food_name}-${index}`}>
-                <strong>{item.food_name}</strong>
-                <span>{item.quantity_gram} g</span>
-              </div>
-            ))}
-          </div>
+          {items.length > 0 ? (
+            <div className="list" style={{ marginTop: 12 }}>
+              {items.map((item, index) => (
+                <div className="list-item" key={`${item.food_name}-${index}`} style={{ alignItems: 'center' }}>
+                  <div>
+                    <strong>{item.food_name}</strong>
+                    <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Porsi {item.quantity_gram} g</div>
+                  </div>
+                  <button className="btn btn-secondary" type="button" onClick={() => removeItem(index)}>
+                    <Trash2 size={14} /> Hapus
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state" style={{ marginTop: 12 }}>
+              Belum ada menu yang disusun. Tambahkan makanan untuk mulai menghitung total gizi.
+            </div>
+          )}
         </div>
 
         <div className="result-card">
@@ -279,23 +401,49 @@ export function HistoryPage() {
       <div className="card" style={{ marginTop: 20 }}>
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
           <h4 className="card-title">Riwayat tersimpan</h4>
-          <span className="chip">{historyLoading ? 'Memuat...' : `${savedHistory.length} data`}</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button className="btn btn-secondary" type="button" onClick={() => void refreshHistory(true)} disabled={historyLoading}>
+              <RefreshCw size={14} /> {historyLoading ? 'Memuat...' : 'Muat ulang'}
+            </button>
+            <span className="chip">{historyLoading ? 'Memuat...' : `${savedHistory.length} data`}</span>
+          </div>
         </div>
-        {savedHistory.length > 0 ? (
-          <div className="list" style={{ marginTop: 12 }}>
-            {savedHistory.map((entry) => (
-              <div className="list-item" key={entry.id}>
-                <div>
-                  <strong>{entry.meal_label ?? 'Menu tersimpan'}</strong>
-                  <div className="muted">{new Date(entry.created_at).toLocaleString('id-ID')}</div>
+        {groupedHistory.length > 0 ? (
+          <div className="stack" style={{ marginTop: 12 }}>
+            {groupedHistory.map((group) => (
+              <div className="card" key={group.key} style={{ marginTop: 0 }}>
+                <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+                  <div>
+                    <h4 className="card-title" style={{ marginBottom: 0 }}>{group.label}</h4>
+                    <p className="muted" style={{ marginTop: 4 }}>{group.entries.length} entri pada tanggal ini</p>
+                  </div>
+                  <span className="chip">{group.entries.reduce((sum, entry) => sum + entry.food_items.length, 0)} item</span>
                 </div>
-                <span>{entry.food_items.length} item</span>
+                <div className="list" style={{ marginTop: 12 }}>
+                  {group.entries.map((entry) => (
+                    <div className="list-item" key={entry.id} style={{ alignItems: 'center', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <strong>{entry.meal_label ?? 'Riwayat scan'}</strong>
+                        <div className="muted" style={{ marginTop: 4 }}>{new Date(entry.created_at).toLocaleString('id-ID')}</div>
+                        <div className="muted" style={{ marginTop: 4, fontSize: 12 }}>
+                          {entry.source === 'scan' ? 'Hasil scan' : 'Susunan menu manual'} • {entry.food_items.length} item
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>{formatNutrition('Energy', entry.total_nutrition?.Energy ?? 0)}</span>
+                        <button className="btn btn-secondary" type="button" onClick={() => void deleteHistoryEntry(entry)} disabled={deletingId === entry.id || historyLoading}>
+                          <Trash2 size={14} /> {deletingId === entry.id ? 'Menghapus...' : 'Hapus'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="empty-state" style={{ marginTop: 12 }}>
-            {historyLoading ? 'Memuat riwayat dari server...' : 'Belum ada riwayat yang tersimpan ke database.'}
+            {historyLoading ? 'Memuat riwayat dari server...' : 'Belum ada riwayat yang tersimpan.'}
           </div>
         )}
       </div>

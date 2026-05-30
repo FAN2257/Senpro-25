@@ -6,6 +6,7 @@ import {
   MealRequest,
   ModelStatusResponse,
   NutritionPredictionResponse,
+  DeleteMealHistoryResponse,
   SaveMealHistoryPayload,
   SaveMealHistoryResponse
 } from '../types/api';
@@ -79,6 +80,12 @@ export function saveMealHistory(payload: SaveMealHistoryPayload) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload)
+  });
+}
+
+export function deleteMealHistory(entryId: string) {
+  return apiFetch<DeleteMealHistoryResponse>(`/history/meals/${encodeURIComponent(entryId)}`, {
+    method: 'DELETE'
   });
 }
 
