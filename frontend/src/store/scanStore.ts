@@ -22,6 +22,7 @@ interface ScanStoreState {
   setError: (error: string) => void;
   setResult: (result: NutritionPredictionResponse | null) => void;
   pushHistory: (filename: string, result: NutritionPredictionResponse) => void;
+  removeHistoryItem: (id: string) => void;
   reset: () => void;
 }
 
@@ -62,6 +63,11 @@ export const useScanStore = create<ScanStoreState>()(
             },
             ...state.history
           ].slice(0, 10)
+        }));
+      },
+      removeHistoryItem: (id) => {
+        set((state) => ({
+          history: state.history.filter((item) => item.id !== id)
         }));
       },
       reset: () => {

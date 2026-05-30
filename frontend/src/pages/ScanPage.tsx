@@ -6,6 +6,7 @@ import type { DetectionItem, SaveMealHistoryPayload } from '../types/api';
 import { formatNutrition } from '../lib/nutrition';
 import { useScanStore } from '../store/scanStore';
 import { MotionSection } from '../components/MotionSection';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 const isMobileDevice = () => { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); };
 
@@ -74,6 +75,7 @@ export function ScanPage() {
   const [selectedOtherKeys, setSelectedOtherKeys] = useState<Record<string, boolean>>({});
   const [portionGram, setPortionGram] = useState(DEFAULT_PORTION_GRAM);
   const [historySaving, setHistorySaving] = useState(false);
+  const [historyDeleteTarget, setHistoryDeleteTarget] = useState<string | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const {
@@ -88,6 +90,7 @@ export function ScanPage() {
     setError,
     setLoading,
     pushHistory,
+    removeHistoryItem,
     reset
   } = useScanStore();
 
@@ -353,6 +356,16 @@ export function ScanPage() {
     }
   };
 
+  const deleteLocalHistoryItem = async () => {
+    if (!historyDeleteTarget) {
+      return;
+    }
+
+    removeHistoryItem(historyDeleteTarget);
+    setHistoryDeleteTarget(null);
+    toast.success('Riwayat scan lokal dihapus.');
+  };
+
   return (
     <MotionSection className="section">
       <div className="section-header">
@@ -552,9 +565,14 @@ export function ScanPage() {
             {history.length > 0 ? (
               <div className="list" style={{ marginTop: 12 }}>
                 {history.slice(0, 3).map((item) => (
-                  <div className="list-item" key={item.id}>
-                    <strong>{item.filename}</strong>
-                    <span>{item.detectionCount} hasil</span>
+                  <div className="list-item" key={item.id} style={{ alignItems: 'center' }}>
+                    <div>
+                      <strong>{item.filename}</strong>
+                      <div className="muted" style={{ marginTop: 4, fontSize: 12 }}>{item.detectionCount} hasil</div>
+                    </div>
+                    <button className="btn btn-secondary" type="button" onClick={() => setHistoryDeleteTarget(item.id)}>
+                      Hapus
+                    </button>
                   </div>
                 ))}
               </div>
@@ -564,6 +582,16 @@ export function ScanPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={historyDeleteTarget !== null}
+        title="Hapus riwayat scan lokal?"
+        description="Item ini akan dihapus dari daftar riwayat terakhir di halaman scan. Riwayat tersimpan di database tetap aman."
+        confirmLabel="Ya, hapus"
+        cancelLabel="Tidak jadi"
+        onClose={() => setHistoryDeleteTarget(null)}
+        onConfirm={deleteLocalHistoryItem}
+      />
     </MotionSection>
   );
 }

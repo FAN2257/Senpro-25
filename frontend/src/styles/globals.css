@@ -519,6 +519,63 @@ img {
   backdrop-filter: blur(18px);
 }
 
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(16px);
+}
+
+.confirm-dialog {
+  width: min(100%, 520px);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.24);
+  padding: 24px;
+}
+
+.confirm-dialog-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.confirm-dialog-eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+.confirm-dialog-title {
+  margin: 0;
+  font-family: "Sora", "Plus Jakarta Sans", ui-sans-serif, sans-serif;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.confirm-dialog-close {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.confirm-dialog-description {
+  margin: 12px 0 0;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
 .topnav {
   display: flex;
   align-items: center;
@@ -637,5 +694,40 @@ img {
 
   .auth-compare {
     grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .toolbar {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .list-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobile-upload-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .confirm-backdrop {
+    padding: 14px;
+  }
+
+  .confirm-dialog {
+    padding: 20px;
   }
 }

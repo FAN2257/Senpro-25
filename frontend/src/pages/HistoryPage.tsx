@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { calculateMeal, deleteMealHistory, getMealHistory, saveMealHistory } from '../lib/api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { formatNutrition } from '../lib/nutrition';
 import type { MealCalculationResponse, MealHistoryEntry, MealItem } from '../types/api';
 
@@ -101,6 +102,7 @@ export function HistoryPage() {
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MealHistoryEntry | null>(null);
 
   const totalItems = useMemo(() => items.length, [items]);
   const today = useMemo(() => new Date(), []);
@@ -212,14 +214,6 @@ export function HistoryPage() {
   };
 
   const deleteHistoryEntry = async (entry: MealHistoryEntry) => {
-    const confirmed = window.confirm(
-      `Hapus riwayat "${entry.meal_label ?? 'riwayat ini'}"? Tindakan ini tidak bisa dibatalkan.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setDeletingId(entry.id);
 
     try {
@@ -230,6 +224,7 @@ export function HistoryPage() {
       toast.error('Riwayat gagal dihapus.');
     } finally {
       setDeletingId(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -431,7 +426,7 @@ export function HistoryPage() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span>{formatNutrition('Energy', entry.total_nutrition?.Energy ?? 0)}</span>
-                        <button className="btn btn-secondary" type="button" onClick={() => void deleteHistoryEntry(entry)} disabled={deletingId === entry.id || historyLoading}>
+                        <button className="btn btn-secondary" type="button" onClick={() => setDeleteTarget(entry)} disabled={deletingId === entry.id || historyLoading}>
                           <Trash2 size={14} /> {deletingId === entry.id ? 'Menghapus...' : 'Hapus'}
                         </button>
                       </div>
@@ -447,6 +442,21 @@ export function HistoryPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Hapus riwayat tersimpan?"
+        description={deleteTarget ? `Riwayat "${deleteTarget.meal_label ?? 'riwayat ini'}" akan dihapus permanen dari database.` : 'Riwayat ini akan dihapus permanen dari database.'}
+        confirmLabel="Ya, hapus"
+        cancelLabel="Tidak jadi"
+        busy={deleteTarget ? deletingId === deleteTarget.id : false}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (deleteTarget) {
+            await deleteHistoryEntry(deleteTarget);
+          }
+        }}
+      />
     </section>
   );
 }
