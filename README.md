@@ -60,8 +60,8 @@ Sesuai kebutuhan dokumentasi, bukti kontribusi anggota tim dicantumkan melalui t
 
 | Nama | Kontribusi | Bukti Kontribusi |
 |------|------------|------------------|
-| Fadel Aulia Naldi | Project Manager, Backend Software Engineer, AI Engineer | [README kontribusi](#kontribusi-anggota-tim), [PPT presentasi](#), [bukti tugas/commit](#) |
-| Lalu Kevin Proudy Handal | UI/UX Designer, Frontend Software Engineer, Cloud Engineer | [README kontribusi](#kontribusi-anggota-tim), [PPT presentasi](#), [bukti tugas/commit](#) |
+| Fadel Aulia Naldi | Project Manager, Backend Software Engineer, AI Engineer | [PWA / Deploy](https://snapeats-backend-g6bwb4cffpd5cgev.southeastasia-01.azurewebsites.net/), [PPT Canva](https://canva.link/tppbjeqvr3qfn89) |
+| Lalu Kevin Proudy Handal | UI/UX Designer, Frontend Software Engineer, Cloud Engineer | [PWA / Deploy](https://snapeats-backend-g6bwb4cffpd5cgev.southeastasia-01.azurewebsites.net/), [PPT Canva](https://canva.link/tppbjeqvr3qfn89) |
 | Mirsad Alganawi Azma | Minim / belum ada kontribusi yang tercatat | - |
 | Bintang Mahardika Shandy | Minim / belum ada kontribusi yang tercatat | - |
 
