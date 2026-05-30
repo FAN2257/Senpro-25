@@ -54,6 +54,19 @@ flowchart LR
 | Mirsad Alganawi Azma | 23/522716/TK/57737 |
 | Bintang Mahardika Shandy | 23/517449/TK/56919 |
 
+## Kontribusi Anggota Tim
+
+Sesuai kebutuhan dokumentasi, bukti kontribusi anggota tim dicantumkan melalui tautan yang relevan pada presentasi, README repository, atau artefak lain yang mendukung.
+
+| Nama | Kontribusi | Bukti Kontribusi |
+|------|------------|------------------|
+| Fadel Aulia Naldi | Project Manager, Backend Software Engineer, AI Engineer | [README kontribusi](#kontribusi-anggota-tim), [PPT presentasi](#), [bukti tugas/commit](#) |
+| Lalu Kevin Proudy Handal | UI/UX Designer, Frontend Software Engineer, Cloud Engineer | [README kontribusi](#kontribusi-anggota-tim), [PPT presentasi](#), [bukti tugas/commit](#) |
+| Mirsad Alganawi Azma | Minim / belum ada kontribusi yang tercatat | - |
+| Bintang Mahardika Shandy | Minim / belum ada kontribusi yang tercatat | - |
+
+Catatan: tautan pada kolom bukti dapat diganti dengan link final ke PPT, repository, commit history, issue, atau dokumen lain yang menunjukkan kontribusi masing-masing anggota.
+
 ## Struktur Repo
 
 ```text
